@@ -1,28 +1,26 @@
 import {
-    AreaSeries,
+    AnimatedAreaStack,
     AnimatedAxis, // any of these can be non-animated equivalents
     AnimatedGrid,
+    AreaSeries,
     darkTheme,
-    AnimatedAreaStack,
     XYChart,
-} from '@visx/xychart';
+} from "@visx/xychart";
 
-import React, { useEffect, useState } from 'react';
-
+import { useEffect, useState } from "react";
 
 export default function PortfolioGraph(props) {
     const [data, setData] = useState([]);
 
     useEffect(() => {
-        if(props.holdingsJoined) {
-            console.log(props.holdingsJoined)
-            let portData = []
-            Object.entries(props.holdingsJoined).map(([holdingId, holding]) => {
-                let holdingPrices = [];
+        if (props.holdingsJoined) {
+            const portData = [];
+            Object.entries(props.holdingsJoined).map(([_holdingId, holding]) => {
+                const holdingPrices = [];
                 let sortedTxDateValues = null;
-                if(holding.transactions) {
+                if (holding.transactions) {
                     sortedTxDateValues = [...holding.transactions].sort((a, b) => {
-                        if(a.datetime > b.datetime) {
+                        if (a.datetime > b.datetime) {
                             return 1;
                         } else if (b.datetime > a.datetime) {
                             return -1;
@@ -41,24 +39,24 @@ export default function PortfolioGraph(props) {
                     });
                     return null;
                 });
-                holdingPrices.sort((a,b) => (a.x > b.x) ? 1 : ((b.x > a.x) ? -1 : 0))
+                holdingPrices.sort((a, b) => (a.x > b.x ? 1 : b.x > a.x ? -1 : 0));
 
                 let currentTx = 0;
                 let currentUnits = 0;
-                if(sortedTxDateValues) {
+                if (sortedTxDateValues) {
                     holdingPrices.map((price) => {
-                        if(currentTx !== sortedTxDateValues.length) {
-                            while(price.x >= sortedTxDateValues[currentTx].datetime) {
+                        if (currentTx !== sortedTxDateValues.length) {
+                            while (price.x >= sortedTxDateValues[currentTx].datetime) {
                                 currentUnits += parseFloat(sortedTxDateValues[currentTx].units);
                                 currentTx += 1;
-                                if(currentTx === sortedTxDateValues.length) {
-                                    break
+                                if (currentTx === sortedTxDateValues.length) {
+                                    break;
                                 }
                             }
                         }
                         price.y = price.y * currentUnits;
                         return null;
-                    })
+                    });
                     portData.push([holding.ticker_name, holdingPrices]);
                 }
                 return null;
@@ -66,24 +64,23 @@ export default function PortfolioGraph(props) {
             setData(portData);
         }
     }, [props.holdingsJoined]);
-  
+
     const accessors = {
-        xAccessor: d => new 
-        Date(d.x),
-        yAccessor: d => d.y,
+        xAccessor: (d) => new Date(d.x),
+        yAccessor: (d) => d.y,
     };
 
     return (
-        <XYChart 
+        <XYChart
             height={400}
-            xScale={{ 
-                type: 'time',
-                padding: 10
-            }} 
-            yScale={{ type: 'linear', nice: true }} 
+            xScale={{
+                type: "time",
+                padding: 10,
+            }}
+            yScale={{ type: "linear", nice: true }}
             theme={darkTheme}
         >
-            <AnimatedAxis 
+            <AnimatedAxis
                 orientation="bottom"
                 label="Date"
                 // tickFormat={tickFormat}
@@ -92,17 +89,16 @@ export default function PortfolioGraph(props) {
             <AnimatedGrid columns={false} numTicks={4} />
             <AnimatedAreaStack stackOffset={0}>
                 {data.map(([holdingName, holding]) => {
-                    console.log(holdingName, holding)
                     return (
-                        <AreaSeries 
+                        <AreaSeries
                             key={holdingName}
                             dataKey={holdingName}
                             fillOpacity={0.4}
                             data={holding}
-                            lineProps={{fill: holding.color}}
+                            lineProps={{ fill: holding.color }}
                             {...accessors}
                         />
-                    )
+                    );
                 })}
             </AnimatedAreaStack>
             {/* <Tooltip
@@ -122,5 +118,5 @@ export default function PortfolioGraph(props) {
                 )}
             /> */}
         </XYChart>
-    )
+    );
 }

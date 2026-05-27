@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useContext } from 'react';
-import makeStyles from '@mui/styles/makeStyles';
-import Paper from '@mui/material/Paper';
-import axios from 'axios';
-import HoldingsTable from './HoldingsTable';
-import ContentLoading from '../ContentLoading';
+import Paper from "@mui/material/Paper";
+import makeStyles from "@mui/styles/makeStyles";
+import axios from "axios";
+import { useContext, useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { AccountContext } from "../Account";
-import { Navigate } from 'react-router-dom';
+import ContentLoading from "../ContentLoading";
+import HoldingsTable from "./HoldingsTable";
 
-const useStyles = makeStyles((theme) => ({}));
-
+const useStyles = makeStyles((_theme) => ({}));
 
 export default function HoldingsListView() {
     const classes = useStyles();
@@ -22,37 +21,30 @@ export default function HoldingsListView() {
     useEffect(() => {
         getSession()
             .then((session) => {
-                console.log(`Authenticated with session ${session}`);
                 const endpoint = `${import.meta.env.VITE_API_ENDPOINT}holdings/list/?accountId=${session.idToken.payload.sub}`;
-                axios.get(endpoint)
-                    .then(res => {
-                        console.log(res);
-                        setHoldings(res.data.items);
-                        setContentLoading(false); 
-                    });
-            }).catch((err) => {
+                axios.get(endpoint).then((res) => {
+                    setHoldings(res.data.items);
+                    setContentLoading(false);
+                });
+            })
+            .catch((_err) => {
                 setAuthFailed(true);
-                console.log("Not authenticated. Redirecting");
             });
     }, [getSession]);
 
     if (authFailed) {
-        return <Navigate to='/login' replace />
+        return <Navigate to="/login" replace />;
     }
 
     return (
         <>
-            {contentLoading? (
+            {contentLoading ? (
                 <ContentLoading />
             ) : (
                 <div className={classes.root} component={Paper}>
-                    <HoldingsTable
-                        holdings={holdings}
-                        setHoldings={setHoldings}
-                    />
+                    <HoldingsTable holdings={holdings} setHoldings={setHoldings} />
                 </div>
             )}
         </>
-
-    )
+    );
 }

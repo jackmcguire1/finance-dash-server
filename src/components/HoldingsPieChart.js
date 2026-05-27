@@ -1,10 +1,9 @@
 // Influenced by https://www.youtube.com/watch?v=bL3P9CqQkKw
 
-import React, { useState } from 'react';
-import { Group } from '@visx/group';
-import { Pie } from '@visx/shape';
-import { Text } from '@visx/text';
-
+import { Group } from "@visx/group";
+import { Pie } from "@visx/shape";
+import { Text } from "@visx/text";
+import { useState } from "react";
 
 export default function HoldingsPieChart(props) {
     const [active, setActive] = useState(null);
@@ -13,18 +12,18 @@ export default function HoldingsPieChart(props) {
 
     const holdingPct = (activeHolding) => {
         const holdingsTotal = props?.chartData.reduce((a, b) => a + b.marketValue, 0);
-        const percent = (100 * activeHolding.marketValue / holdingsTotal).toFixed(2);
+        const percent = ((100 * activeHolding.marketValue) / holdingsTotal).toFixed(2);
         return `${percent}%`;
-    }
+    };
 
     return (
         <svg width={width} height={width}>
             <Group top={half} left={half}>
-                <Pie 
+                <Pie
                     data={props?.chartData}
                     pieValue={(data) => data.marketValue}
                     outerRadius={half}
-                    innerRadius={({data}) => {
+                    innerRadius={({ data }) => {
                         const size = active && active.symbol === data.symbol ? 40 : 35;
                         return half - size;
                     }}
@@ -33,16 +32,16 @@ export default function HoldingsPieChart(props) {
                     {(pie) => {
                         return pie.arcs.map((arc) => {
                             return (
-                                <g 
+                                <g
                                     key={arc.data.symbol}
                                     onMouseEnter={() => setActive(arc.data)}
                                     onMouseLeave={() => setActive(null)}
-                                    cursor='pointer'
+                                    cursor="pointer"
                                 >
                                     <path d={pie.path(arc)} fill={arc.data.color}></path>
                                 </g>
-                            )
-                        })
+                            );
+                        });
                     }}
                 </Pie>
                 {active ? (
@@ -65,8 +64,7 @@ export default function HoldingsPieChart(props) {
                         {`${props?.chartData.length} holdings`}
                     </Text>
                 )}
-                
             </Group>
         </svg>
-    )
+    );
 }

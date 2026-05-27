@@ -1,21 +1,21 @@
-import React, { useContext, useRef, useState } from "react";
-import { AccountContext } from "./Account";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
-import Divider from "@mui/material/Divider";
-import Box from "@mui/material/Box";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useContext, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AccountContext } from "./Account";
 import PortfolioImporter from "./ImportExport/PortfolioImporter";
 
 function getInitials(user) {
     if (user?.displayName) {
         return user.displayName
             .split(" ")
-            .map(w => w[0])
+            .map((w) => w[0])
             .slice(0, 2)
             .join("")
             .toUpperCase();
@@ -73,10 +73,7 @@ const Status = () => {
                 Download
             </a>
 
-            <Button
-                onClick={(e) => setAnchorEl(e.currentTarget)}
-                sx={{ p: 0.5, minWidth: 0, borderRadius: 8 }}
-            >
+            <Button onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ p: 0.5, minWidth: 0, borderRadius: 8 }}>
                 <Avatar sx={{ bgcolor: avatarColor, width: 36, height: 36, fontSize: 14, fontWeight: 700 }}>
                     {initials}
                 </Avatar>
@@ -93,9 +90,13 @@ const Status = () => {
                 {user && (
                     <Box sx={{ px: 2, py: 1.5 }}>
                         {user.displayName && (
-                            <Typography variant="body2" fontWeight={600}>{user.displayName}</Typography>
+                            <Typography variant="body2" fontWeight={600}>
+                                {user.displayName}
+                            </Typography>
                         )}
-                        <Typography variant="caption" color="text.secondary">{user.email}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {user.email}
+                        </Typography>
                     </Box>
                 )}
                 <Divider />

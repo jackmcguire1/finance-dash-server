@@ -19,19 +19,18 @@ export const category20Colors = [
     "#dbdb8d",
     "#17becf",
     "#9edae5",
-]
-
+];
 
 export function toCurrencyString(v) {
     const parsed = Math.abs(parseFloat(v));
-    let asStr = '';
+    let asStr = "";
     if (parsed > 1) {
-        asStr = parsed.toFixed(2); 
+        asStr = parsed.toFixed(2);
     } else {
         // find index of first non-zero / decimal value
         const parsedStr = `${parsed}`;
         const nzIndex = [...parsedStr].findIndex((v) => {
-            return v !== '0' && v !== '.';
+            return v !== "0" && v !== ".";
         });
         asStr = parsed.toFixed(nzIndex + 1);
     }
@@ -44,26 +43,22 @@ export function toGainString(v, m) {
     const parsedFixed = parsed.toFixed(2);
     const currencyStr = toCurrencyString(chg);
     if (parseFloat(m) === 0) {
-        return (
-            <div style={{ color: 'gray' }}>
-                +{currencyStr} (+0.00%)
-            </div>
-        );
+        return <div style={{ color: "gray" }}>+{currencyStr} (+0.00%)</div>;
     } else if (parsed < 0) {
         return (
-            <div style={{ color: 'red' }}>
+            <div style={{ color: "red" }}>
                 -{currencyStr} ({parsedFixed}%)
             </div>
         );
     } else if (parsed > 0) {
         return (
-            <div style={{ color: 'green' }}>
+            <div style={{ color: "green" }}>
                 +{currencyStr} (+{parsedFixed}%)
             </div>
         );
     } else {
         return (
-            <div style={{ color: 'gray' }}>
+            <div style={{ color: "gray" }}>
                 +{currencyStr} (+{parsedFixed}%)
             </div>
         );

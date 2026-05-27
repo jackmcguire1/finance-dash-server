@@ -1,42 +1,35 @@
-import React, { useContext } from 'react';
-import {
-    BrowserRouter as Router,
-    Routes,
-    Route,
-    NavLink,
-    Navigate,
-    useLocation,
-} from "react-router-dom";
-import makeStyles from '@mui/styles/makeStyles';
-import Drawer from '@mui/material/Drawer';
-import AppBar from '@mui/material/AppBar';
-import CssBaseline from '@mui/material/CssBaseline';
-import Toolbar from '@mui/material/Toolbar';
-import List from '@mui/material/List';
-import Typography from '@mui/material/Typography';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
-import HoldingsListView from './HoldingsList/HoldingsListView';
-import HoldingView from './HoldingView';
-import Dashboard from './Dashboard';
-import Status from './Status';
-import Login from './Login';
-import { AccountContext } from './Account';
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
+import CssBaseline from "@mui/material/CssBaseline";
+import Drawer from "@mui/material/Drawer";
+import List from "@mui/material/List";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
+import makeStyles from "@mui/styles/makeStyles";
+import { useContext } from "react";
+import { Navigate, NavLink, Route, BrowserRouter as Router, Routes, useLocation } from "react-router-dom";
+import { AccountContext } from "./Account";
+import Dashboard from "./Dashboard";
+import HoldingsListView from "./HoldingsList/HoldingsListView";
+import HoldingView from "./HoldingView";
+import Login from "./Login";
+import Status from "./Status";
 
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        display: 'flex',
+        display: "flex",
     },
     appBar: {
         zIndex: theme.zIndex.drawer + 1,
-        background: 'linear-gradient(0deg, rgba(41,3,48,1) 0%, rgba(116,15,135,1) 100%)'
+        background: "linear-gradient(0deg, rgba(41,3,48,1) 0%, rgba(116,15,135,1) 100%)",
     },
     drawer: {
         width: drawerWidth,
@@ -46,17 +39,17 @@ const useStyles = makeStyles((theme) => ({
         width: drawerWidth,
     },
     drawerContainer: {
-        overflow: 'auto',
+        overflow: "auto",
     },
     content: {
         flexGrow: 1,
         padding: theme.spacing(3),
     },
     navItemSelected: {
-        background: 'linear-gradient(0deg, #0a093a 0%, #2421b7 100%)'
+        background: "linear-gradient(0deg, #0a093a 0%, #2421b7 100%)",
     },
     titleText: {
-        flex: 1
+        flex: 1,
     },
 }));
 
@@ -68,13 +61,13 @@ function AppShell() {
     // Still resolving auth state
     if (user === undefined) {
         return (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
                 <CircularProgress />
             </Box>
         );
     }
 
-    const isLogin = location.pathname === '/login';
+    const isLogin = location.pathname === "/login";
 
     // Redirect unauthenticated users to login (except when already there)
     if (!user && !isLogin) {
@@ -101,29 +94,29 @@ function AppShell() {
                     <Status />
                 </Toolbar>
             </AppBar>
-            <Drawer
-                className={classes.drawer}
-                variant="permanent"
-                classes={{ paper: classes.drawerPaper }}
-            >
+            <Drawer className={classes.drawer} variant="permanent" classes={{ paper: classes.drawerPaper }}>
                 <Toolbar />
                 <div className={classes.drawerContainer}>
                     <List disablePadding>
                         <ListItemButton
                             component={NavLink}
                             to="/dashboard"
-                            className={({ isActive }) => isActive ? classes.navItemSelected : undefined}
+                            className={({ isActive }) => (isActive ? classes.navItemSelected : undefined)}
                         >
-                            <ListItemIcon><DashboardIcon /></ListItemIcon>
-                            <ListItemText primary='Dashboard' />
+                            <ListItemIcon>
+                                <DashboardIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Dashboard" />
                         </ListItemButton>
                         <ListItemButton
                             component={NavLink}
                             to="/holdings"
-                            className={({ isActive }) => isActive ? classes.navItemSelected : undefined}
+                            className={({ isActive }) => (isActive ? classes.navItemSelected : undefined)}
                         >
-                            <ListItemIcon><AccountBalanceIcon /></ListItemIcon>
-                            <ListItemText primary='Holdings' />
+                            <ListItemIcon>
+                                <AccountBalanceIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Holdings" />
                         </ListItemButton>
                     </List>
                 </div>

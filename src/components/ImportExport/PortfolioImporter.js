@@ -1,15 +1,15 @@
-import React, { useContext, useRef, useState } from "react";
-import { MenuItem } from "@mui/material";
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import CircularProgress from "@mui/material/CircularProgress";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-import Typography from "@mui/material/Typography";
+import { MenuItem } from "@mui/material";
 import Box from "@mui/material/Box";
-import { AccountContext } from "../Account";
-import { useNavigate } from "react-router-dom";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import Typography from "@mui/material/Typography";
 import axios from "axios";
+import { useContext, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AccountContext } from "../Account";
 
 const PortfolioImporter = () => {
     const { getSession } = useContext(AccountContext);
@@ -48,6 +48,7 @@ const PortfolioImporter = () => {
                     setTimeout(() => {
                         setStatus(null);
                         navigate("/holdings");
+                        window.location.reload();
                     }, 1500);
                 })
                 .catch(() => {
@@ -71,24 +72,42 @@ const PortfolioImporter = () => {
 
             <Dialog open={status !== null} PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
                 <DialogContent>
-                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 2, px: 3, minWidth: 220 }}>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            gap: 2,
+                            py: 2,
+                            px: 3,
+                            minWidth: 220,
+                        }}
+                    >
                         {status === "importing" && (
                             <>
                                 <CircularProgress size={48} />
-                                <Typography variant="body1" fontWeight={500}>Importing portfolio…</Typography>
+                                <Typography variant="body1" fontWeight={500}>
+                                    Importing portfolio…
+                                </Typography>
                             </>
                         )}
                         {status === "done" && (
                             <>
                                 <CheckCircleOutlineIcon sx={{ fontSize: 48, color: "success.main" }} />
-                                <Typography variant="body1" fontWeight={500}>Import complete!</Typography>
+                                <Typography variant="body1" fontWeight={500}>
+                                    Import complete!
+                                </Typography>
                             </>
                         )}
                         {status === "error" && (
                             <>
                                 <ErrorOutlineIcon sx={{ fontSize: 48, color: "error.main" }} />
-                                <Typography variant="body1" fontWeight={500}>Import failed</Typography>
-                                <Typography variant="body2" color="text.secondary">Check the file format and try again.</Typography>
+                                <Typography variant="body1" fontWeight={500}>
+                                    Import failed
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Check the file format and try again.
+                                </Typography>
                             </>
                         )}
                     </Box>

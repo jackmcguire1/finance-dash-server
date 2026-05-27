@@ -1,31 +1,31 @@
-import React, { useEffect, useState, useContext } from 'react';
-import axios from 'axios';
-import { Navigate, useNavigate } from 'react-router-dom';
-import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
-import Skeleton from '@mui/material/Skeleton';
-import Button from '@mui/material/Button';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import { toCurrencyString } from '../utils';
-import HoldingsPieChart from './HoldingsPieChart';
-import ContentLoading from './ContentLoading';
-import { AccountContext } from './Account';
-import { getMVTotalGain, getPurchasePrice } from '../utils/holding';
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Grid";
+import Skeleton from "@mui/material/Skeleton";
+import Typography from "@mui/material/Typography";
+import axios from "axios";
+import React, { useContext, useEffect, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { toCurrencyString } from "../utils";
+import { getMVTotalGain, getPurchasePrice } from "../utils/holding";
+import { AccountContext } from "./Account";
+import ContentLoading from "./ContentLoading";
+import HoldingsPieChart from "./HoldingsPieChart";
 
 function MetricCardSkeleton() {
     return (
-        <Card sx={{ height: '100%', borderRadius: 2 }}>
+        <Card sx={{ height: "100%", borderRadius: 2 }}>
             <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                     <Skeleton variant="circular" width={24} height={24} />
                     <Skeleton width={80} height={16} />
                 </Box>
@@ -38,12 +38,14 @@ function MetricCardSkeleton() {
 
 function EmptyState({ navigate }) {
     return (
-        <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
-            <Typography variant="h5" fontWeight={700} mb={3}>Dashboard</Typography>
+        <Box sx={{ maxWidth: 1100, mx: "auto" }}>
+            <Typography variant="h5" fontWeight={700} mb={3}>
+                Dashboard
+            </Typography>
 
             {/* Skeleton metric cards */}
             <Grid container spacing={2} mb={3}>
-                {[0, 1, 2, 3].map(i => (
+                {[0, 1, 2, 3].map((i) => (
                     <Grid item xs={12} sm={6} md={3} key={i}>
                         <MetricCardSkeleton />
                     </Grid>
@@ -53,20 +55,22 @@ function EmptyState({ navigate }) {
             {/* Empty state prompt */}
             <Card sx={{ borderRadius: 2 }}>
                 <CardContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6, gap: 2 }}>
-                        <AccountBalanceWalletIcon sx={{ fontSize: 56, color: 'text.disabled' }} />
-                        <Typography variant="h6" fontWeight={600}>Nothing to see here yet</Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 6, gap: 2 }}>
+                        <AccountBalanceWalletIcon sx={{ fontSize: 56, color: "text.disabled" }} />
+                        <Typography variant="h6" fontWeight={600}>
+                            Nothing to see here yet
+                        </Typography>
                         <Typography variant="body2" color="text.secondary" textAlign="center" maxWidth={360}>
                             Add your holdings to start tracking your portfolio value, gains, and allocation.
                         </Typography>
-                        <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <Box sx={{ display: "flex", gap: 2, mt: 1, flexWrap: "wrap", justifyContent: "center" }}>
                             <Button
                                 variant="contained"
                                 startIcon={<UploadFileIcon />}
-                                onClick={() => navigate('/holdings')}
+                                onClick={() => navigate("/holdings")}
                                 sx={{
-                                    background: 'linear-gradient(90deg, #740f87, #2421b7)',
-                                    '&:hover': { background: 'linear-gradient(90deg, #8a1aa0, #3530d4)' },
+                                    background: "linear-gradient(90deg, #740f87, #2421b7)",
+                                    "&:hover": { background: "linear-gradient(90deg, #8a1aa0, #3530d4)" },
                                 }}
                             >
                                 Import portfolio
@@ -74,7 +78,7 @@ function EmptyState({ navigate }) {
                             <Button
                                 variant="outlined"
                                 startIcon={<AddCircleOutlineIcon />}
-                                onClick={() => navigate('/holdings')}
+                                onClick={() => navigate("/holdings")}
                             >
                                 Add holding
                             </Button>
@@ -87,18 +91,23 @@ function EmptyState({ navigate }) {
 }
 
 function MetricCard({ icon, label, value, sub, subPositive }) {
-    const subColor = subPositive === null ? 'text.secondary'
-        : subPositive ? 'success.main' : 'error.main';
+    const subColor = subPositive === null ? "text.secondary" : subPositive ? "success.main" : "error.main";
     return (
-        <Card sx={{ height: '100%', borderRadius: 2 }}>
+        <Card sx={{ height: "100%", borderRadius: 2 }}>
             <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Box sx={{ color: 'primary.main' }}>{icon}</Box>
-                    <Typography variant="body2" color="text.secondary">{label}</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Box sx={{ color: "primary.main" }}>{icon}</Box>
+                    <Typography variant="body2" color="text.secondary">
+                        {label}
+                    </Typography>
                 </Box>
-                <Typography variant="h5" fontWeight={700}>{value}</Typography>
+                <Typography variant="h5" fontWeight={700}>
+                    {value}
+                </Typography>
                 {sub && (
-                    <Typography variant="body2" sx={{ color: subColor, mt: 0.5 }}>{sub}</Typography>
+                    <Typography variant="body2" sx={{ color: subColor, mt: 0.5 }}>
+                        {sub}
+                    </Typography>
                 )}
             </CardContent>
         </Card>
@@ -110,24 +119,35 @@ function TopHoldingRow({ holding, rank }) {
     const gainPct = holding.totalGainPct;
     const positive = gain >= 0;
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center', py: 1.5, gap: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ width: 20, textAlign: 'right' }}>
+        <Box sx={{ display: "flex", alignItems: "center", py: 1.5, gap: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ width: 20, textAlign: "right" }}>
                 {rank}
             </Typography>
             <Box
                 sx={{
-                    width: 10, height: 10, borderRadius: '50%',
-                    bgcolor: holding.color, flexShrink: 0,
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    bgcolor: holding.color,
+                    flexShrink: 0,
                 }}
             />
             <Box sx={{ flex: 1 }}>
-                <Typography variant="body2" fontWeight={600}>{holding.ticker_symbol}</Typography>
-                <Typography variant="caption" color="text.secondary">{holding.ticker_name}</Typography>
+                <Typography variant="body2" fontWeight={600}>
+                    {holding.ticker_symbol}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                    {holding.ticker_name}
+                </Typography>
             </Box>
-            <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="body2" fontWeight={600}>{toCurrencyString(holding.marketValue)}</Typography>
-                <Typography variant="caption" sx={{ color: positive ? 'success.main' : 'error.main' }}>
-                    {positive ? '+' : ''}{toCurrencyString(Math.abs(gain))} ({positive ? '+' : ''}{gainPct.toFixed(2)}%)
+            <Box sx={{ textAlign: "right" }}>
+                <Typography variant="body2" fontWeight={600}>
+                    {toCurrencyString(holding.marketValue)}
+                </Typography>
+                <Typography variant="caption" sx={{ color: positive ? "success.main" : "error.main" }}>
+                    {positive ? "+" : ""}
+                    {toCurrencyString(Math.abs(gain))} ({positive ? "+" : ""}
+                    {gainPct.toFixed(2)}%)
                 </Typography>
             </Box>
         </Box>
@@ -149,33 +169,37 @@ export default function Dashboard() {
             })
             .then((res) => {
                 const combined = res.data.holdings.map((holding) => {
-                    const txs = res.data.transactions.filter(t => t.holding_id === holding.holding_id);
+                    const txs = res.data.transactions.filter((t) => t.holding_id === holding.holding_id);
                     const units = txs.reduce((a, b) => a + +b.units, 0);
                     const marketValue = units * parseFloat(holding.current_price);
                     const totalGain = getMVTotalGain(txs, parseFloat(holding.current_price));
                     const spent = getPurchasePrice(txs);
-                    const totalGainPct = spent > 0 ? (100 * totalGain / spent) : 0;
+                    const totalGainPct = spent > 0 ? (100 * totalGain) / spent : 0;
                     const dailyChange = parseFloat(holding.twenty_four_hour_change) || 0;
                     const dailyGain = marketValue * (dailyChange / 100);
                     return { ...holding, txs, units, marketValue, totalGain, totalGainPct, spent, dailyGain };
                 });
 
-                const withValue = combined.filter(h => h.marketValue > 0);
+                const withValue = combined.filter((h) => h.marketValue > 0);
                 const totalValue = withValue.reduce((a, b) => a + b.marketValue, 0);
                 const totalSpent = withValue.reduce((a, b) => a + b.spent, 0);
                 const totalGain = withValue.reduce((a, b) => a + b.totalGain, 0);
-                const totalGainPct = totalSpent > 0 ? (100 * totalGain / totalSpent) : 0;
+                const totalGainPct = totalSpent > 0 ? (100 * totalGain) / totalSpent : 0;
                 const dailyGain = withValue.reduce((a, b) => a + b.dailyGain, 0);
-                const dailyGainPct = totalValue > 0 ? (100 * dailyGain / totalValue) : 0;
+                const dailyGainPct = totalValue > 0 ? (100 * dailyGain) / totalValue : 0;
 
                 const sortedByGainPct = [...withValue].sort((a, b) => b.totalGainPct - a.totalGainPct);
 
                 setData({
-                    totalValue, totalSpent, totalGain, totalGainPct,
-                    dailyGain, dailyGainPct,
+                    totalValue,
+                    totalSpent,
+                    totalGain,
+                    totalGainPct,
+                    dailyGain,
+                    dailyGainPct,
                     holdings: withValue,
                     sortedByGainPct,
-                    pieData: withValue.map(h => ({
+                    pieData: withValue.map((h) => ({
                         marketValue: h.marketValue,
                         symbol: h.ticker_symbol,
                         units: h.units,
@@ -185,7 +209,7 @@ export default function Dashboard() {
                 setContentLoading(false);
             })
             .catch((err) => {
-                if (err?.message === 'No authenticated user') setAuthFailed(true);
+                if (err?.message === "No authenticated user") setAuthFailed(true);
                 // network/server errors don't redirect — just leave the loading state
             });
     }, [getSession]);
@@ -197,8 +221,10 @@ export default function Dashboard() {
     const { totalValue, totalGain, totalGainPct, dailyGain, dailyGainPct, sortedByGainPct, pieData } = data;
 
     return (
-        <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
-            <Typography variant="h5" fontWeight={700} mb={3}>Dashboard</Typography>
+        <Box sx={{ maxWidth: 1100, mx: "auto" }}>
+            <Typography variant="h5" fontWeight={700} mb={3}>
+                Dashboard
+            </Typography>
 
             {/* Summary metric cards */}
             <Grid container spacing={2} mb={3}>
@@ -215,8 +241,8 @@ export default function Dashboard() {
                     <MetricCard
                         icon={<ShowChartIcon />}
                         label="Total gain / loss"
-                        value={`${totalGain >= 0 ? '+' : ''}${toCurrencyString(Math.abs(totalGain))}`}
-                        sub={`${totalGainPct >= 0 ? '+' : ''}${totalGainPct.toFixed(2)}% all time`}
+                        value={`${totalGain >= 0 ? "+" : ""}${toCurrencyString(Math.abs(totalGain))}`}
+                        sub={`${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(2)}% all time`}
                         subPositive={totalGain >= 0}
                     />
                 </Grid>
@@ -224,8 +250,8 @@ export default function Dashboard() {
                     <MetricCard
                         icon={dailyGain >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
                         label="24h change"
-                        value={`${dailyGain >= 0 ? '+' : ''}${toCurrencyString(Math.abs(dailyGain))}`}
-                        sub={`${dailyGainPct >= 0 ? '+' : ''}${dailyGainPct.toFixed(2)}% today`}
+                        value={`${dailyGain >= 0 ? "+" : ""}${toCurrencyString(Math.abs(dailyGain))}`}
+                        sub={`${dailyGainPct >= 0 ? "+" : ""}${dailyGainPct.toFixed(2)}% today`}
                         subPositive={dailyGain >= 0}
                     />
                 </Grid>
@@ -243,10 +269,12 @@ export default function Dashboard() {
             {/* Pie chart + top performers */}
             <Grid container spacing={2}>
                 <Grid item xs={12} md={5}>
-                    <Card sx={{ borderRadius: 2, height: '100%' }}>
+                    <Card sx={{ borderRadius: 2, height: "100%" }}>
                         <CardContent>
-                            <Typography variant="subtitle1" fontWeight={600} mb={1}>Allocation</Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                            <Typography variant="subtitle1" fontWeight={600} mb={1}>
+                                Allocation
+                            </Typography>
+                            <Box sx={{ display: "flex", justifyContent: "center" }}>
                                 <HoldingsPieChart chartData={pieData} />
                             </Box>
                         </CardContent>
@@ -254,9 +282,11 @@ export default function Dashboard() {
                 </Grid>
 
                 <Grid item xs={12} md={7}>
-                    <Card sx={{ borderRadius: 2, height: '100%' }}>
+                    <Card sx={{ borderRadius: 2, height: "100%" }}>
                         <CardContent>
-                            <Typography variant="subtitle1" fontWeight={600} mb={1}>Holdings performance</Typography>
+                            <Typography variant="subtitle1" fontWeight={600} mb={1}>
+                                Holdings performance
+                            </Typography>
                             {sortedByGainPct.map((h, i) => (
                                 <React.Fragment key={h.holding_id}>
                                     {i > 0 && <Divider />}
@@ -264,7 +294,9 @@ export default function Dashboard() {
                                 </React.Fragment>
                             ))}
                             {sortedByGainPct.length === 0 && (
-                                <Typography variant="body2" color="text.secondary">No holdings with value yet.</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    No holdings with value yet.
+                                </Typography>
                             )}
                         </CardContent>
                     </Card>

@@ -1,16 +1,12 @@
-import 'dotenv/config';
-import { updateTickerPrices } from '../services/coingecko';
-import { pool } from '../db/pool';
-
-console.log('Running ticker price update...');
+import "dotenv/config";
+import { pool } from "../db/pool";
+import { updateTickerPrices } from "../services/coingecko";
 
 updateTickerPrices()
     .then(() => {
-        console.log('Done');
         process.exit(0);
     })
-    .catch((err) => {
-        console.error('Failed:', err);
+    .catch((_err) => {
         process.exit(1);
     })
     .finally(() => {

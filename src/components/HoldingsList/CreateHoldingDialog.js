@@ -1,66 +1,66 @@
-import React, { useContext } from 'react';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import makeStyles from '@mui/styles/makeStyles';
-import { IconButton, Tooltip } from '@mui/material';
-import axios from 'axios';
-import Pagination from '@mui/material/Pagination';
-import AddIcon from '@mui/icons-material/Add';
-import CircularProgress from '@mui/material/CircularProgress';
-import { AccountContext } from "../Account";
+import AddIcon from "@mui/icons-material/Add";
+import { IconButton, Tooltip } from "@mui/material";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Pagination from "@mui/material/Pagination";
+import TextField from "@mui/material/TextField";
+import makeStyles from "@mui/styles/makeStyles";
+import axios from "axios";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AccountContext } from "../Account";
 
 const useStyles = makeStyles((theme) => ({
     formControl: {
-        marginBottom: '20px'
+        marginBottom: "20px",
     },
     dialog: {
-        height: '400px',
-        width: '600px'
+        height: "400px",
+        width: "600px",
     },
     searchField: {
-        width: '100%'
+        width: "100%",
     },
     coinOptionsContainer: {
-        display: 'flex',
-        flexDirection: 'column',
-        height: '280px'
+        display: "flex",
+        flexDirection: "column",
+        height: "280px",
     },
     coinOptionRow: {
         flex: 1,
-        display: 'flex',
-        border: '1px solid #bbbbbb59',
-        padding: '10px',
-        whiteSpace: 'nowrap',
-        cursor: 'pointer',
-        maxHeight: '20%'
+        display: "flex",
+        border: "1px solid #bbbbbb59",
+        padding: "10px",
+        whiteSpace: "nowrap",
+        cursor: "pointer",
+        maxHeight: "20%",
     },
     coinOptionSymbol: {
         flex: 1,
-        margin: 'auto'
+        margin: "auto",
     },
     coinOptionName: {
         flex: 3,
-        margin: 'auto'
+        margin: "auto",
     },
     pagination: {
-        marginTop: '12px'
+        marginTop: "12px",
     },
     rowSelected: {
-        backgroundColor: theme.palette.secondary.main
+        backgroundColor: theme.palette.secondary.main,
     },
 }));
 
 export default function CreateHoldingDialog(props) {
     const navigate = useNavigate();
     const classes = useStyles();
-    
+
     const [open, setOpen] = React.useState(false);
-    const [searchText, setSearchText] = React.useState('');
+    const [searchText, setSearchText] = React.useState("");
     const [coinData, setCoinData] = React.useState([]);
     const [displayedCoins, setDisplayedCoins] = React.useState([]);
     const [pageCoins, setPageCoins] = React.useState([]);
@@ -73,18 +73,17 @@ export default function CreateHoldingDialog(props) {
 
     const buttonSx = {
         ...(addSuccess && {
-          bgcolor: '#4CAF50',
-          '&:hover': {
-            bgcolor: '#4CAF50',
-          },
+            bgcolor: "#4CAF50",
+            "&:hover": {
+                bgcolor: "#4CAF50",
+            },
         }),
     };
 
     const handleClickOpen = () => {
-        if(coinData.length === 0 ) {
+        if (coinData.length === 0) {
             const endpoint = `${import.meta.env.VITE_API_ENDPOINT}coins/list`;
-            axios.get(endpoint)
-            .then(res => {
+            axios.get(endpoint).then((res) => {
                 setCoinData(res.data);
                 setPageCoins(res.data.slice(0, 5));
             });
@@ -96,64 +95,56 @@ export default function CreateHoldingDialog(props) {
         setOpen(false);
     };
 
-    const handleAdd = (event) => {
+    const handleAdd = (_event) => {
         getSession()
             .then((session) => {
-                console.log(`Authenticated with session ${session}`);
                 setAddLoading(true);
-                console.log("Adding holding", selected);
                 const data = {
                     coinId: selected.id,
                     accountId: session.idToken.payload.sub,
                 };
                 const endpoint = `${import.meta.env.VITE_API_ENDPOINT}holdings`;
-                axios.post(
-                    endpoint,
-                    data,
-                    { timeout: 10000 }
-                    ).then(res => {
-                        props.setHoldings([...props.holdings, res.data])
+                axios
+                    .post(endpoint, data, { timeout: 10000 })
+                    .then((res) => {
+                        props.setHoldings([...props.holdings, res.data]);
                         setAddLoading(false);
                         setAddSuccess(true);
                         setOpen(false);
                         props.snackbarRef.current.showSnackbar("success", "Holding added");
                         setAddSuccess(false);
-                    }).catch((err) => {
-                        console.log(err);
-                    });
-            }).catch((err) => {
-                console.log("Not authenticated. Redirecting");
+                    })
+                    .catch((_err) => {});
+            })
+            .catch((_err) => {
                 navigate("/login");
             });
     };
 
     const handleSearchTextUpdated = (text) => {
         setSearchText(text);
-        const newDisplayed = coinData.filter(e => {
+        const newDisplayed = coinData.filter((e) => {
             return (
-                e['name'].toLowerCase().includes(text.toLowerCase()) ||
-                e['symbol'].toLowerCase().includes(text.toLowerCase())
-            )
+                e.name.toLowerCase().includes(text.toLowerCase()) || e.symbol.toLowerCase().includes(text.toLowerCase())
+            );
         });
         setDisplayedCoins(newDisplayed);
         setPageCoins(newDisplayed.slice(0, 5));
         setPage(1);
     };
 
-    const handlePageChange = (event, value) => {
+    const handlePageChange = (_event, value) => {
         setPage(value);
-        setPageCoins(
-            displayedCoins.slice((value - 1) * 5, value * 5)
-        );
-    }
+        setPageCoins(displayedCoins.slice((value - 1) * 5, value * 5));
+    };
 
     const getPageNumbers = (displayedLength, perPage = 5) => {
         return Math.ceil(displayedLength / perPage);
     };
 
-    const handleSetSelected = (event, coin) => {
+    const handleSetSelected = (_event, coin) => {
         setSelected(coin);
-    }
+    };
 
     return (
         <div>
@@ -162,53 +153,44 @@ export default function CreateHoldingDialog(props) {
                     <AddIcon />
                 </IconButton>
             </Tooltip>
-            <Dialog 
-                open={open} onClose={handleClose} 
-                aria-labelledby="form-dialog-title"
-            >
+            <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
                 <DialogTitle id="form-dialog-title">Add holding</DialogTitle>
                 <DialogContent className={classes.dialog}>
-                    <TextField 
+                    <TextField
                         id="search-text"
                         label="Search"
                         variant="filled"
                         value={searchText}
-                        onChange={(e) => {handleSearchTextUpdated(e.target.value)}}
+                        onChange={(e) => {
+                            handleSearchTextUpdated(e.target.value);
+                        }}
                         className={classes.searchField}
                         autoComplete="off"
                     />
                     <div className={classes.coinOptionsContainer}>
-                        {pageCoins.map((coin) => (
+                        {pageCoins.map((coin) =>
                             coin === selected ? (
-                                <div 
+                                <div
                                     className={`${classes.coinOptionRow} ${classes.rowSelected}`}
                                     onClick={(e) => handleSetSelected(e, coin)}
                                     key={coin.id}
                                 >
-                                    <div className={classes.coinOptionSymbol}>
-                                        {coin.symbol}
-                                    </div>
-                                    <div className={classes.coinOptionName}>
-                                        {coin.name}
-                                    </div>
+                                    <div className={classes.coinOptionSymbol}>{coin.symbol}</div>
+                                    <div className={classes.coinOptionName}>{coin.name}</div>
                                 </div>
                             ) : (
-                                <div 
+                                <div
                                     className={classes.coinOptionRow}
                                     onClick={(e) => handleSetSelected(e, coin)}
                                     key={coin.id}
                                 >
-                                    <div className={classes.coinOptionSymbol}>
-                                        {coin.symbol.toUpperCase()}
-                                    </div>
-                                    <div className={classes.coinOptionName}>
-                                        {coin.name}
-                                    </div>
+                                    <div className={classes.coinOptionSymbol}>{coin.symbol.toUpperCase()}</div>
+                                    <div className={classes.coinOptionName}>{coin.name}</div>
                                 </div>
-                            )
-                        ))}
+                            ),
+                        )}
                     </div>
-                    <Pagination 
+                    <Pagination
                         count={getPageNumbers(displayedCoins.length)}
                         color="primary"
                         className={classes.pagination}
@@ -216,33 +198,21 @@ export default function CreateHoldingDialog(props) {
                         page={page}
                     />
                 </DialogContent>
-            <DialogActions>
-            <Button
-                onClick={handleClose}
-                color="primary"
-                variant="contained"
-            >
-                Cancel
-            </Button>
-            <Button
-                variant="contained"
-                sx={buttonSx}
-                // disabled={addLoading}
-                onClick={handleAdd}
-                color="primary"
-            >
-                {addLoading ? (
-                <CircularProgress
-                    size={24}
-                />
-                ) : (
-                <>
-                    Add
-                </>
-                )}
-            </Button>
-            </DialogActions>
-        </Dialog>
+                <DialogActions>
+                    <Button onClick={handleClose} color="primary" variant="contained">
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained"
+                        sx={buttonSx}
+                        // disabled={addLoading}
+                        onClick={handleAdd}
+                        color="primary"
+                    >
+                        {addLoading ? <CircularProgress size={24} /> : <>Add</>}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
     );
 }

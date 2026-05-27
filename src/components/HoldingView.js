@@ -1,96 +1,95 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
-import makeStyles from '@mui/styles/makeStyles';
-import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import Typography from '@mui/material/Typography';
-import { Divider } from '@mui/material';
-import Paper from '@mui/material/Paper';
-import TransactionsTable from './TransactionsTable';
-import { toCurrencyString, toGainString } from '../utils';
-import HoldingPriceChart from './HoldingPriceChart/HoldingPriceChart';
-import ContentLoading from './ContentLoading';
-import { CustomSnackBar } from './CustomSnackBar';
-import { getUnits, getPurchasePrice, getMVTotalGain } from '../utils/holding'
+import { Divider } from "@mui/material";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import makeStyles from "@mui/styles/makeStyles";
+import axios from "axios";
+import { useContext, useEffect, useRef, useState } from "react";
+import { Navigate, useParams } from "react-router-dom";
+import { toCurrencyString, toGainString } from "../utils";
+import { getMVTotalGain, getPurchasePrice, getUnits } from "../utils/holding";
 import { AccountContext } from "./Account";
-import { Navigate } from 'react-router-dom';
+import ContentLoading from "./ContentLoading";
+import { CustomSnackBar } from "./CustomSnackBar";
+import HoldingPriceChart from "./HoldingPriceChart/HoldingPriceChart";
+import TransactionsTable from "./TransactionsTable";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((_theme) => ({
     root: {
-        wordWrap: 'wr',
-        '& a': {
-            color: 'green',
-        }
+        wordWrap: "wr",
+        "& a": {
+            color: "green",
+        },
     },
     flexRow: {
-        display: 'flex',
-        padding: '20px',
+        display: "flex",
+        padding: "20px",
     },
     flexColumnNameSymbol: {
         flex: 1,
     },
     flexLogo: {
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
     },
     flexPricesTable: {
         flex: 1,
-        display: 'flex',
-        height: '100%',
+        display: "flex",
+        height: "100%",
     },
     flexColumnCoinInfo: {
         flex: 2,
-        marginRight: '50px',
+        marginRight: "50px",
     },
     flexColumnCoinInfoTop: {
-        display: 'flex',
+        display: "flex",
     },
     logo: {
-        maxHeight: '100px',
-        maxWidth: '100px',
-        marginLeft: '30px',
-        marginRight: '30px',
+        maxHeight: "100px",
+        maxWidth: "100px",
+        marginLeft: "30px",
+        marginRight: "30px",
     },
     divider: {
-        marginTop: '20px',
-        marginBottom: '20px',
-        height: '5px',
+        marginTop: "20px",
+        marginBottom: "20px",
+        height: "5px",
     },
     flexColumnCoinPrices: {
-        marginTop: '40px',
+        marginTop: "40px",
         flex: 1,
-        display: 'flex',
-        flexDirection: 'column'
+        display: "flex",
+        flexDirection: "column",
     },
     flexRowCoinPrices: {
-        display: 'flex',
+        display: "flex",
         flex: 1,
-        alignItems: 'center'
+        alignItems: "center",
     },
     coinPricesLabel: {
         flex: 1,
-        color: '#fefefe63',
-        textAlign: 'right',
-        marginRight: '20px'
+        color: "#fefefe63",
+        textAlign: "right",
+        marginRight: "20px",
     },
     coinPricesValue: {
-        flex: 2
-    }
+        flex: 2,
+    },
 }));
 
 export default function HoldingView() {
     const classes = useStyles();
     const { holdingId } = useParams();
 
-    const [name, setName] = useState('');
-    const [symbol, setSymbol] = useState('');
+    const [name, setName] = useState("");
+    const [symbol, setSymbol] = useState("");
     const [currentPrice, setCurrentPrice] = useState(0);
-    const [imageUrl, setImageUrl] = useState('');
+    const [imageUrl, setImageUrl] = useState("");
     const [tickerPrices, setTickerPrices] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [twentyFourHrChange, setTwentyFourHrChange] = useState(0);
     const [twentyFourHrVolume, setTwentyFourHrVolume] = useState(0);
     const [marketCap, setMarketCap] = useState(0);
-    const [holdingColor, setHoldingColor] = useState('#75daad');
+    const [holdingColor, setHoldingColor] = useState("#75daad");
     const [authFailed, setAuthFailed] = useState(false);
 
     const [contentLoading, setContentLoading] = useState(true);
@@ -102,21 +101,22 @@ export default function HoldingView() {
     const getTxCircles = () => {
         return transactions.map((t) => {
             return [new Date(t.datetime), parseFloat(t.price) / parseFloat(t.units)];
-        })
+        });
     };
 
     useEffect(() => {
         getSession()
             .then((session) => {
                 const endpoint = `${import.meta.env.VITE_API_ENDPOINT}holdings/?id=${holdingId}&accountId=${session.idToken.payload.sub}`;
-                axios.get(endpoint)
-                .then(res => {
+                axios.get(endpoint).then((res) => {
                     setName(res.data.holding.ticker_name);
                     setSymbol(res.data.holding.ticker_symbol);
                     setImageUrl(res.data.holding.image_url);
-                    setTickerPrices(res.data.tickerPrices.map((p) => {
-                        return [new Date(p.datetime), parseFloat(p.price)]
-                    }));
+                    setTickerPrices(
+                        res.data.tickerPrices.map((p) => {
+                            return [new Date(p.datetime), parseFloat(p.price)];
+                        }),
+                    );
                     setTransactions(res.data.transactions);
                     setHoldingColor(res.data.holding.color);
                     const recentTP = res.data.tickerPrices[res.data.tickerPrices.length - 1];
@@ -127,14 +127,14 @@ export default function HoldingView() {
                     setTwentyFourHrVolume(recentTP.volume);
                     setContentLoading(false);
                 });
-            }).catch((err) => {
+            })
+            .catch((_err) => {
                 setAuthFailed(true);
-                console.log("Not authenticated. Redirecting");
             });
     }, [holdingId, getSession]);
 
     if (authFailed) {
-        return <Navigate to='/login' replace />
+        return <Navigate to="/login" replace />;
     }
 
     return (
@@ -147,101 +147,103 @@ export default function HoldingView() {
                         <div className={classes.flexColumnCoinInfo}>
                             <div className={classes.flexColumnCoinInfoTop}>
                                 <div className={classes.flexColumnNameSymbol}>
-                                    <Typography variant='h2'>{name}</Typography>
-                                    <Typography variant='h3'>{symbol}</Typography>
+                                    <Typography variant="h2">{name}</Typography>
+                                    <Typography variant="h3">{symbol}</Typography>
                                 </div>
                                 <div className={classes.flexColumnCoinPrices}>
                                     <div className={classes.flexRowCoinPrices}>
                                         <div className={classes.coinPricesLabel}>
-                                            <Typography variant='body1'>Price</Typography>
+                                            <Typography variant="body1">Price</Typography>
                                         </div>
                                         <div className={classes.coinPricesValue}>
-                                            <Typography variant='body1'>{toCurrencyString(currentPrice)}</Typography>
+                                            <Typography variant="body1">{toCurrencyString(currentPrice)}</Typography>
                                         </div>
                                     </div>
                                     <div className={classes.flexRowCoinPrices}>
                                         <div className={classes.coinPricesLabel}>
-                                            <Typography variant='body1'>24 hour change (%)</Typography>
+                                            <Typography variant="body1">24 hour change (%)</Typography>
                                         </div>
                                         <div className={classes.coinPricesValue}>
-                                            <Typography variant='body1'>
+                                            <Typography variant="body1">
                                                 {toGainString(twentyFourHrChange, currentPrice)}
                                             </Typography>
                                         </div>
                                     </div>
                                     <div className={classes.flexRowCoinPrices}>
                                         <div className={classes.coinPricesLabel}>
-                                            <Typography variant='body1'>24 hour volume</Typography>
+                                            <Typography variant="body1">24 hour volume</Typography>
                                         </div>
                                         <div className={classes.coinPricesValue}>
-                                            <Typography variant='body1'>{toCurrencyString(twentyFourHrVolume)}</Typography>
+                                            <Typography variant="body1">
+                                                {toCurrencyString(twentyFourHrVolume)}
+                                            </Typography>
                                         </div>
                                     </div>
                                     <div className={classes.flexRowCoinPrices}>
                                         <div className={classes.coinPricesLabel}>
-                                            <Typography variant='body1'>Market cap</Typography>
+                                            <Typography variant="body1">Market cap</Typography>
                                         </div>
                                         <div className={classes.coinPricesValue}>
-                                            <Typography variant='body1'>{toCurrencyString(marketCap)}</Typography>
+                                            <Typography variant="body1">{toCurrencyString(marketCap)}</Typography>
                                         </div>
                                     </div>
                                 </div>
                                 <div className={classes.flexLogo}>
-                                    <img src={imageUrl} className={classes.logo} alt="Coin logo" ></img>
+                                    <img src={imageUrl} className={classes.logo} alt="Coin logo"></img>
                                 </div>
                             </div>
                             <Divider className={classes.divider}></Divider>
-                            <div style={{ display: 'flex' }}>
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                    <div style={{ display: 'flex', flex: 1 }}>
+                            <div style={{ display: "flex" }}>
+                                <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                                    <div style={{ display: "flex", flex: 1 }}>
                                         <div style={{ flex: 1 }} className={classes.coinPricesLabel}>
-                                            <Typography variant='h6'>Units</Typography>
+                                            <Typography variant="h6">Units</Typography>
                                         </div>
                                         <div style={{ flex: 2 }}>
-                                            <Typography variant='h6'>{getUnits(transactions)}</Typography>
+                                            <Typography variant="h6">{getUnits(transactions)}</Typography>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', flex: 1 }}>
+                                    <div style={{ display: "flex", flex: 1 }}>
                                         <div style={{ flex: 1 }} className={classes.coinPricesLabel}>
-                                            <Typography variant='h6'>Market value</Typography>
+                                            <Typography variant="h6">Market value</Typography>
                                         </div>
                                         <div style={{ flex: 2 }}>
-                                            <Typography variant='h6'>
+                                            <Typography variant="h6">
                                                 {toCurrencyString(getUnits(transactions) * currentPrice)}
                                             </Typography>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', flex: 1 }}>
+                                    <div style={{ display: "flex", flex: 1 }}>
                                         <div style={{ flex: 1 }} className={classes.coinPricesLabel}>
-                                            <Typography variant='h6'>Market value 24h gain</Typography>
+                                            <Typography variant="h6">Market value 24h gain</Typography>
                                         </div>
                                         <div style={{ flex: 2 }}>
-                                            <Typography variant='h6'>
+                                            <Typography variant="h6">
                                                 {toGainString(
                                                     parseFloat(twentyFourHrChange),
-                                                    getPurchasePrice(transactions)
+                                                    getPurchasePrice(transactions),
                                                 )}
                                             </Typography>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', flex: 1 }}>
+                                    <div style={{ display: "flex", flex: 1 }}>
                                         <div style={{ flex: 1 }} className={classes.coinPricesLabel}>
-                                            <Typography variant='h6'>Market value total gain</Typography>
+                                            <Typography variant="h6">Market value total gain</Typography>
                                         </div>
                                         <div style={{ flex: 2 }}>
-                                            <Typography variant='h6'>
+                                            <Typography variant="h6">
                                                 {toGainString(
-                                                    (100 * getMVTotalGain(transactions, currentPrice) / getPurchasePrice(transactions)),
-                                                    getPurchasePrice(transactions)
+                                                    (100 * getMVTotalGain(transactions, currentPrice)) /
+                                                        getPurchasePrice(transactions),
+                                                    getPurchasePrice(transactions),
                                                 )}
                                             </Typography>
                                         </div>
                                     </div>
                                 </div>
-                                <div style={{ flex: 1, display: 'flex' }}>
-                                </div>
+                                <div style={{ flex: 1, display: "flex" }}></div>
                             </div>
-                            <TransactionsTable 
+                            <TransactionsTable
                                 transactions={transactions}
                                 currentPrice={currentPrice}
                                 twentyFour={twentyFourHrChange}
@@ -249,7 +251,7 @@ export default function HoldingView() {
                                 snackbarRef={snackbarRef}
                                 setTransactions={setTransactions}
                             ></TransactionsTable>
-                            <HoldingPriceChart 
+                            <HoldingPriceChart
                                 data={tickerPrices}
                                 circlesData={getTxCircles()}
                                 chartColor={holdingColor}
@@ -260,5 +262,5 @@ export default function HoldingView() {
                 </div>
             )}
         </>
-    )
+    );
 }

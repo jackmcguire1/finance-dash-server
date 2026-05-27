@@ -1,13 +1,11 @@
-import 'dotenv/config';
-import { pool } from './pool';
-import { runMigrations } from './migrate';
+import "dotenv/config";
+import { runMigrations } from "./migrate";
+import { pool } from "./pool";
 
 runMigrations(pool)
     .then(() => {
-        console.log('Migrations complete');
         process.exit(0);
     })
-    .catch((err) => {
-        console.error('Migration failed:', err);
+    .catch((_err) => {
         process.exit(1);
     });

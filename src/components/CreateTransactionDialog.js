@@ -1,18 +1,18 @@
-import React from 'react';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import makeStyles from '@mui/styles/makeStyles';
-import { FilledInput, FormControlLabel, IconButton, Radio, RadioGroup, Tooltip } from '@mui/material';
-import axios from 'axios';
-import AddIcon from '@mui/icons-material/Add';
+import AddIcon from "@mui/icons-material/Add";
+import { FilledInput, FormControlLabel, IconButton, Radio, RadioGroup, Tooltip } from "@mui/material";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import TextField from "@mui/material/TextField";
+import makeStyles from "@mui/styles/makeStyles";
+import axios from "axios";
+import React from "react";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((_theme) => ({
     horizControlsContainer: {
         display: "flex",
         gap: "15px",
@@ -34,13 +34,13 @@ export default function CreateTransactionDialog(props) {
     const classes = useStyles();
 
     const endpoint = `${import.meta.env.VITE_API_ENDPOINT}transactions`;
-    
+
     const [open, setOpen] = React.useState(false);
-    const [buySell, setBuySell] = React.useState('BUY');
-    const [units, setUnits] = React.useState('');
-    const [price, setPrice] = React.useState('');
-    const [pricePerUnit, setPricePerUnit] = React.useState('');
-    const [date, setDate] = React.useState('');
+    const [buySell, setBuySell] = React.useState("BUY");
+    const [units, setUnits] = React.useState("");
+    const [price, setPrice] = React.useState("");
+    const [pricePerUnit, setPricePerUnit] = React.useState("");
+    const [date, setDate] = React.useState("");
 
     const handleClickOpen = () => {
         setOpen(true);
@@ -56,18 +56,14 @@ export default function CreateTransactionDialog(props) {
             datetime: date,
             buySell: buySell,
             units: units,
-            price: price
+            price: price,
         };
-        axios.post(
-            endpoint,
-            data
-        ).then(res => {
-            console.log(res);
-            props.setTransactions([...props.transactions, res.data])
+        axios.post(endpoint, data).then((res) => {
+            props.setTransactions([...props.transactions, res.data]);
             setOpen(false);
             props.snackbarRef.current.showSnackbar("success", "Transaction added successfully!");
         });
-    }
+    };
 
     return (
         <div>
@@ -80,34 +76,31 @@ export default function CreateTransactionDialog(props) {
                 <DialogTitle id="form-dialog-title">Add transaction</DialogTitle>
                 <DialogContent>
                     <FormControl variant="filled" className={classes.formControl} fullWidth>
-                        <InputLabel id="date-label" shrink>Transaction date</InputLabel>
+                        <InputLabel id="date-label" shrink>
+                            Transaction date
+                        </InputLabel>
                         <FilledInput
                             type="date"
                             id="date-input"
                             value={date}
-                            onChange={(e) => {setDate(e.target.value)}}
+                            onChange={(e) => {
+                                setDate(e.target.value);
+                            }}
                             labelId="date-label"
                         ></FilledInput>
                     </FormControl>
                     <FormControl variant="filled" className={classes.formControl} fullWidth>
-                        <RadioGroup 
+                        <RadioGroup
                             row
                             aria-label="gender"
                             name="row-radio-buttons-group"
                             value={buySell}
-                            onChange={(e) => {setBuySell(e.target.value)}}
+                            onChange={(e) => {
+                                setBuySell(e.target.value);
+                            }}
                         >
-                            <FormControlLabel
-                                value="BUY"
-                                control={<Radio />}
-                                label="Buy"
-                            />
-                            <FormControlLabel
-                                value="SELL"
-                                control={<Radio />}
-                                label="Sell"
-                                disabled
-                            />
+                            <FormControlLabel value="BUY" control={<Radio />} label="Buy" />
+                            <FormControlLabel value="SELL" control={<Radio />} label="Sell" disabled />
                         </RadioGroup>
                     </FormControl>
                     <FormControl variant="filled" className={classes.formControl} fullWidth>
@@ -156,22 +149,14 @@ export default function CreateTransactionDialog(props) {
                         </FormControl>
                     </div>
                 </DialogContent>
-            <DialogActions>
-                <Button
-                    onClick={handleClose}
-                    color="primary"
-                    variant="contained"
-                >
-                Cancel
-                </Button>
-                <Button
-                    onClick={handleSubmit}
-                    color="primary"
-                    variant="contained"
-                >
-                Add
-                </Button>
-            </DialogActions>
+                <DialogActions>
+                    <Button onClick={handleClose} color="primary" variant="contained">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSubmit} color="primary" variant="contained">
+                        Add
+                    </Button>
+                </DialogActions>
             </Dialog>
         </div>
     );

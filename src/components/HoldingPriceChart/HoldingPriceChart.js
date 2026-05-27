@@ -1,15 +1,16 @@
 //https://codesandbox.io/s/github/airbnb/visx/tree/master/packages/visx-demo/src/sandboxes/visx-brush?file=/Example.tsx:965-1080
-import React, { useMemo, useState, useRef } from 'react';
-import AreaChart from "./AreaChart";
-import { extent, max } from 'd3-array';
-import { Brush } from '@visx/brush';
-import { PatternLines } from '@visx/pattern';
-import { scaleLinear, scaleTime } from '@visx/scale';
 
-const PATTERN_ID = 'brush_pattern';
+import { Brush } from "@visx/brush";
+import { PatternLines } from "@visx/pattern";
+import { scaleLinear, scaleTime } from "@visx/scale";
+import { extent, max } from "d3-array";
+import { useMemo, useRef, useState } from "react";
+import AreaChart from "./AreaChart";
+
+const PATTERN_ID = "brush_pattern";
 const selectedBrushStyle = {
     fill: `url(#${PATTERN_ID})`,
-    stroke: 'white',
+    stroke: "white",
 };
 
 // accessors
@@ -34,8 +35,8 @@ export default function HoldingPriceChart({
         right: 20,
     },
     chartSeperation = 30,
-    accentColor = '#f6acc8',
-    chartColor = '#75daad',
+    accentColor = "#f6acc8",
+    chartColor = "#75daad",
 }) {
     const brushRef = useRef(null);
     const [filteredData, setFilteredData] = useState(data);
@@ -49,7 +50,7 @@ export default function HoldingPriceChart({
             return x > x0 && x < x1 && y > y0 && y < y1;
         });
         setFilteredData(dataCopy);
-    }
+    };
 
     const innerHeight = height - margin.top - margin.bottom;
     const topChartBottomMargin = chartSeperation + 10;
@@ -64,7 +65,7 @@ export default function HoldingPriceChart({
 
     // scales
     const dateScale = useMemo(
-        () => 
+        () =>
             scaleTime({
                 range: [0, xMax],
                 domain: extent(filteredData, getDate),
@@ -72,7 +73,7 @@ export default function HoldingPriceChart({
         [xMax, filteredData],
     );
     const priceScale = useMemo(
-        () => 
+        () =>
             scaleLinear({
                 range: [yMax, 0],
                 domain: [0, max(filteredData, getPrice) || 0],
@@ -97,37 +98,31 @@ export default function HoldingPriceChart({
             }),
         [yBrushMax, data],
     );
-    const initialBrushPosition = useMemo(
-        () => {
-            if(data.length > 0) {
-                const startDate = new Date(data[0][0]);
-                const today = new Date();
-                const daysTotal = parseInt((today - startDate) / (1000 * 3600 * 24));
-                if (daysTotal < 365) {
-                    setFilteredData(data);
-                    return {
-                        start: { x: brushDateScale(getDate(data[0])) },
-                        end: { x: brushDateScale(getDate(data[data.length - 1])) },
-                    };
-                } else {
-                    const filtered = data.filter((d) => {
-                        return (
-                            parseInt((today - new Date(d[0])) / (1000 * 3600 * 24))
-                            < 365
-                        );
-                    });
-                    setFilteredData(filtered);
-                    return {
-                        start: { 
-                            x: brushDateScale(getDate(data[data.length - filtered.length]))
-                        },
-                        end: { x: brushDateScale(getDate(data[data.length - 1])) },
-                    };
-                }
+    const initialBrushPosition = useMemo(() => {
+        if (data.length > 0) {
+            const startDate = new Date(data[0][0]);
+            const today = new Date();
+            const daysTotal = parseInt((today - startDate) / (1000 * 3600 * 24), 10);
+            if (daysTotal < 365) {
+                setFilteredData(data);
+                return {
+                    start: { x: brushDateScale(getDate(data[0])) },
+                    end: { x: brushDateScale(getDate(data[data.length - 1])) },
+                };
+            } else {
+                const filtered = data.filter((d) => {
+                    return parseInt((today - new Date(d[0])) / (1000 * 3600 * 24), 10) < 365;
+                });
+                setFilteredData(filtered);
+                return {
+                    start: {
+                        x: brushDateScale(getDate(data[data.length - filtered.length])),
+                    },
+                    end: { x: brushDateScale(getDate(data[data.length - 1])) },
+                };
             }
-        },
-        [brushDateScale, data],
-    );
+        }
+    }, [brushDateScale, data]);
 
     return (
         <div>
@@ -160,7 +155,7 @@ export default function HoldingPriceChart({
                     width={8}
                     stroke={accentColor}
                     strokeWidth={1}
-                    orientation={['diagonal']}
+                    orientation={["diagonal"]}
                 />
                 <Brush
                     xScale={brushDateScale}
@@ -170,7 +165,7 @@ export default function HoldingPriceChart({
                     margin={brushMargin}
                     handleSize={8}
                     innerRef={brushRef}
-                    resizeTriggerAreas={['left', 'right']}
+                    resizeTriggerAreas={["left", "right"]}
                     brushDirection="horizontal"
                     initialBrushPosition={initialBrushPosition}
                     onChange={onBrushChange}
@@ -180,5 +175,5 @@ export default function HoldingPriceChart({
                 />
             </AreaChart>
         </div>
-    )
+    );
 }

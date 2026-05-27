@@ -1,8 +1,8 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { Pool } from 'pg';
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import type { Pool } from "pg";
 
-const schema = readFileSync(join(__dirname, '../../../db/schema.sql'), 'utf8');
+const schema = readFileSync(join(__dirname, "../../../db/schema.sql"), "utf8");
 
 export async function runMigrations(pool: Pool): Promise<void> {
     const client = await pool.connect();

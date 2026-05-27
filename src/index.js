@@ -1,24 +1,24 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
-import ClippedDrawer from './components/ClippedDrawer';
-import reportWebVitals from './reportWebVitals';
-import { createTheme, ThemeProvider, StyledEngineProvider } from '@mui/material';
+import React from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import { createTheme, StyledEngineProvider, ThemeProvider } from "@mui/material";
 import { Account } from "./components/Account";
+import ClippedDrawer from "./components/ClippedDrawer";
+import reportWebVitals from "./reportWebVitals";
 
 const theme = createTheme({
     palette: {
-        mode: 'dark',
+        mode: "dark",
         primary: {
-            main: '#740f87'
+            main: "#740f87",
         },
         secondary: {
-            main: '#2421b7'
-        }
-    }
+            main: "#2421b7",
+        },
+    },
 });
 
-const root = createRoot(document.getElementById('root'));
+const root = createRoot(document.getElementById("root"));
 root.render(
     <React.StrictMode>
         <StyledEngineProvider injectFirst>
@@ -28,7 +28,7 @@ root.render(
                 </Account>
             </ThemeProvider>
         </StyledEngineProvider>
-    </React.StrictMode>
+    </React.StrictMode>,
 );
 
 reportWebVitals();
