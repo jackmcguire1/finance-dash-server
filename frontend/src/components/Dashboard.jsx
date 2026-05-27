@@ -18,13 +18,14 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import axios from "axios";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toCurrencyString } from "../utils";
 import { getMVTotalGain, getPurchasePrice } from "../utils/holding";
 import { AccountContext } from "./Account";
 import { useCurrency } from "./Currency";
 import ContentLoading from "./ContentLoading";
+import PortfolioImporter from "./ImportExport/PortfolioImporter";
 import HoldingsPieChart from "./HoldingsPieChart";
 
 function MetricCardSkeleton() {
@@ -42,7 +43,7 @@ function MetricCardSkeleton() {
     );
 }
 
-function EmptyState({ navigate }) {
+function EmptyState({ navigate, importerRef }) {
     return (
         <Box sx={{ maxWidth: 1100, mx: "auto" }}>
             <Typography variant="h5" fontWeight={700} mb={3}>
@@ -70,10 +71,11 @@ function EmptyState({ navigate }) {
                             Add your holdings to start tracking your portfolio value, gains, and allocation.
                         </Typography>
                         <Box sx={{ display: "flex", gap: 2, mt: 1, flexWrap: "wrap", justifyContent: "center" }}>
+                            <PortfolioImporter ref={importerRef} showMenuItem={false} />
                             <Button
                                 variant="contained"
                                 startIcon={<UploadFileIcon />}
-                                onClick={() => navigate("/holdings")}
+                                onClick={() => importerRef.current?.open()}
                                 sx={{
                                     background: "linear-gradient(90deg, #740f87, #2421b7)",
                                     "&:hover": { background: "linear-gradient(90deg, #8a1aa0, #3530d4)" },
@@ -173,6 +175,7 @@ export default function Dashboard() {
     const { getSession } = useContext(AccountContext);
     const { currency, symbol } = useCurrency();
     const navigate = useNavigate();
+    const importerRef = useRef(null);
 
     useEffect(() => {
         getSession()
@@ -222,7 +225,7 @@ export default function Dashboard() {
 
     if (authFailed) return <Navigate to="/login" replace />;
     if (contentLoading) return <ContentLoading />;
-    if (!data || data.holdings.length === 0) return <EmptyState navigate={navigate} lastPriceUpdate={data?.lastPriceUpdate} />;
+    if (!data || data.holdings.length === 0) return <EmptyState navigate={navigate} importerRef={importerRef} />;
 
     const { totalValue, totalGain, totalGainPct, dailyGain, dailyGainPct, lastPriceUpdate, holdings: withValue, sortedByGainPct, pieData } = data;
 

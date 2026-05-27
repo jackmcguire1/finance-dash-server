@@ -7,14 +7,18 @@ import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import Typography from "@mui/material/Typography";
 import axios from "axios";
-import { useContext, useRef, useState } from "react";
+import { forwardRef, useContext, useImperativeHandle, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AccountContext } from "../Account";
 
-const PortfolioImporter = () => {
+const PortfolioImporter = forwardRef(function PortfolioImporter({ showMenuItem = true }, ref) {
     const { getSession } = useContext(AccountContext);
     const fileSelectorRef = useRef();
     const navigate = useNavigate();
+
+    useImperativeHandle(ref, () => ({
+        open() { fileSelectorRef.current?.click(); },
+    }));
 
     const [status, setStatus] = useState(null); // null | 'importing' | 'done' | 'error'
 
@@ -69,7 +73,7 @@ const PortfolioImporter = () => {
                 accept=".json"
                 onChange={importPortfolio}
             />
-            <MenuItem onClick={handleImportClicked}>Import portfolio</MenuItem>
+            {showMenuItem && <MenuItem onClick={handleImportClicked}>Import portfolio</MenuItem>}
 
             <Dialog open={status !== null} PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
                 <DialogContent>
@@ -116,6 +120,6 @@ const PortfolioImporter = () => {
             </Dialog>
         </>
     );
-};
+});
 
 export default PortfolioImporter;
