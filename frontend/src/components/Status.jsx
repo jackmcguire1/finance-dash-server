@@ -38,7 +38,6 @@ const Status = () => {
     const { getSession, logout, user } = useContext(AccountContext);
     const downloadAnchorRef = useRef();
     const [anchorEl, setAnchorEl] = useState(null);
-    const [fileDownloadUrl, setFileDownloadUrl] = useState("");
     const open = Boolean(anchorEl);
 
     const handleLogout = () => {
@@ -54,12 +53,12 @@ const Status = () => {
                 return axios.get(endpoint, { headers: { Authorization: `Bearer ${session.token}` } });
             })
             .then((res) => {
-                const blob = new Blob([JSON.stringify(res.data)]);
+                const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
-                setFileDownloadUrl(url);
-                downloadAnchorRef.current.click();
-                URL.revokeObjectURL(url);
-                setFileDownloadUrl("");
+                const a = downloadAnchorRef.current;
+                a.href = url;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 100);
             })
             .catch(console.error);
     };
@@ -69,7 +68,7 @@ const Status = () => {
 
     return (
         <div>
-            <a style={{ display: "none" }} href={fileDownloadUrl} download="portfolio.json" ref={downloadAnchorRef}>
+            <a style={{ display: "none" }} download="portfolio.json" ref={downloadAnchorRef}>
                 Download
             </a>
 
