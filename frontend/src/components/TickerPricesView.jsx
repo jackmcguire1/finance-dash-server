@@ -1,7 +1,5 @@
-import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -21,7 +19,6 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AccountContext } from "./Account";
 import ContentLoading from "./ContentLoading";
-import CreateHoldingDialog from "./HoldingsList/CreateHoldingDialog";
 import { toCurrencyString } from "../utils";
 
 function descendingComparator(a, b, orderBy) {
@@ -52,11 +49,11 @@ export default function TickerPricesView() {
     const [authFailed, setAuthFailed] = useState(false);
     const [searchText, setSearchText] = useState("");
     const [popperOpen, setPopperOpen] = useState(false);
+    const [selectedCoin, setSelectedCoin] = useState(null);
     const [order, setOrder] = useState("desc");
     const [orderBy, setOrderBy] = useState("market_cap");
     const searchTimeout = useRef(null);
     const searchAnchorRef = useRef(null);
-    const dialogRef = useRef(null);
     const { getSession } = useContext(AccountContext);
 
     useEffect(() => {
@@ -71,6 +68,7 @@ export default function TickerPricesView() {
 
     const handleSearchChange = (value) => {
         setSearchText(value);
+        setSelectedCoin(null);
         clearTimeout(searchTimeout.current);
         if (!value.trim()) {
             setSearchCoins(null);
@@ -89,10 +87,10 @@ export default function TickerPricesView() {
     };
 
     const handleSelectFromPopper = (coin) => {
-        setSearchText("");
+        setSearchText(coin.name);
         setSearchCoins(null);
         setPopperOpen(false);
-        dialogRef.current.openWithCoin(coin);
+        setSelectedCoin(coin);
     };
 
     const handleSort = (id) => {
@@ -101,18 +99,16 @@ export default function TickerPricesView() {
         setOrderBy(id);
     };
 
-    const sorted = useMemo(
-        () => [...topCoins].sort(getComparator(order, orderBy)),
-        [topCoins, order, orderBy],
-    );
+    const sorted = useMemo(() => {
+        if (selectedCoin) return [selectedCoin];
+        return [...topCoins].sort(getComparator(order, orderBy));
+    }, [topCoins, order, orderBy, selectedCoin]);
 
     if (authFailed) return <Navigate to="/login" replace />;
     if (initialLoading) return <ContentLoading />;
 
     return (
         <Box sx={{ maxWidth: 1100, mx: "auto" }}>
-            <CreateHoldingDialog ref={dialogRef} showTrigger={false} holdings={[]} setHoldings={() => {}} />
-
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
                 <Typography variant="h5" fontWeight={700}>Prices</Typography>
                 <ClickAwayListener onClickAway={() => setPopperOpen(false)}>
@@ -120,10 +116,10 @@ export default function TickerPricesView() {
                         <TextField
                             fullWidth
                             size="small"
-                            placeholder="Search to add a coin…"
+                            placeholder="Search coins…"
                             value={searchText}
                             onChange={(e) => handleSearchChange(e.target.value)}
-                            onFocus={() => searchText && setPopperOpen(true)}
+                            onFocus={() => searchText && !selectedCoin && setPopperOpen(true)}
                             autoComplete="off"
                             InputProps={{
                                 startAdornment: (
@@ -187,11 +183,6 @@ export default function TickerPricesView() {
                                                             <Typography variant="body2" sx={{ color: change >= 0 ? "success.main" : "error.main" }}>
                                                                 {change >= 0 ? "+" : ""}{change.toFixed(2)}%
                                                             </Typography>
-                                                        </TableCell>
-                                                        <TableCell align="right" sx={{ pr: 1 }}>
-                                                            <Button size="small" variant="outlined" startIcon={<AddIcon />}>
-                                                                Add
-                                                            </Button>
                                                         </TableCell>
                                                     </TableRow>
                                                 );
