@@ -91,7 +91,7 @@ export async function updateTickerPrices(): Promise<void> {
         );
         if (rows.length === 0) return;
 
-        const coinIds = rows.map(r => r.coin_id).join('%2C');
+        const coinIds = rows.map(r => r.coin_id).join(',');
         const { data } = await axios.get(`${BASE}/simple/price`, {
             headers: geckoHeaders(),
             params: {
