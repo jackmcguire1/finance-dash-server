@@ -53,7 +53,8 @@ Requires Node 24 (`nvm use 24`) and a local/remote Postgres instance.
 ### Backend (`server/`)
 ```bash
 npm install
-npm run build        # compile TypeScript → dist/
+npm run build        # bundle with tsdown → dist/
+npm run typecheck    # tsc type-check only (no emit)
 npm run dev          # tsx watch with Node inspector (hot reload)
 npm start            # run compiled dist/handlers/api.js
 npm run migrate      # run DB migrations standalone
