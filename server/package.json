@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
     "dev": "node --inspect=0.0.0.0:9229 --require tsx/cjs --watch src/handlers/api.ts",
     "start": "node dist/handlers/api.js",
     "migrate": "tsx src/db/migrate-run.ts",
@@ -29,6 +30,7 @@
     "@types/pg": "^8.20.0",
     "@types/pg-copy-streams": "^1.2.5",
     "@types/uuid": "^11.0.0",
+    "tsdown": "^0.22.0",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"
   }
