@@ -25,7 +25,7 @@ import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import axios from "axios";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toCurrencyString } from "../../utils";
 import { AccountContext } from "../Account";
@@ -87,10 +87,7 @@ function CoinPickerTable({ coins, loading, selected, onSelect }) {
                                     {coin.current_price != null ? toCurrencyString(coin.current_price) : "—"}
                                 </TableCell>
                                 <TableCell align="right">
-                                    <Typography
-                                        variant="body2"
-                                        sx={{ color: change >= 0 ? "success.main" : "error.main" }}
-                                    >
+                                    <Typography variant="body2" sx={{ color: change >= 0 ? "success.main" : "error.main" }}>
                                         {change >= 0 ? "+" : ""}{change.toFixed(2)}%
                                     </Typography>
                                 </TableCell>
@@ -106,14 +103,14 @@ function CoinPickerTable({ coins, loading, selected, onSelect }) {
     );
 }
 
-export default function CreateHoldingDialog(props) {
+const CreateHoldingDialog = forwardRef(function CreateHoldingDialog(props, ref) {
     const navigate = useNavigate();
 
     const [open, setOpen] = useState(false);
     const [step, setStep] = useState(1);
 
     const [topCoins, setTopCoins] = useState([]);
-    const [searchCoins, setSearchCoins] = useState(null); // null = not searching
+    const [searchCoins, setSearchCoins] = useState(null);
     const [searchText, setSearchText] = useState("");
     const [coinsLoading, setCoinsLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
@@ -130,15 +127,33 @@ export default function CreateHoldingDialog(props) {
 
     const { getSession } = useContext(AccountContext);
 
+    // Expose openWithCoin(coin) so TickerPricesView can skip step 1
+    useImperativeHandle(ref, () => ({
+        openWithCoin(coin) {
+            resetTransactionFields();
+            setSelected(coin);
+            setStep(2);
+            setOpen(true);
+        },
+    }));
+
     useEffect(() => {
-        if (open && topCoins.length === 0) {
+        if (open && step === 1 && topCoins.length === 0) {
             setCoinsLoading(true);
             axios
                 .get(`${import.meta.env.VITE_API_ENDPOINT}coins/markets?perPage=25`)
                 .then((res) => { setTopCoins(res.data); setCoinsLoading(false); })
                 .catch(() => setCoinsLoading(false));
         }
-    }, [open]);
+    }, [open, step]);
+
+    const resetTransactionFields = () => {
+        setBuySell("BUY");
+        setUnits("");
+        setPrice("");
+        setPricePerUnit("");
+        setDate("");
+    };
 
     const handleSearchChange = (value) => {
         setSearchText(value);
@@ -162,11 +177,7 @@ export default function CreateHoldingDialog(props) {
         setSelected(null);
         setSearchText("");
         setSearchCoins(null);
-        setBuySell("BUY");
-        setUnits("");
-        setPrice("");
-        setPricePerUnit("");
-        setDate("");
+        resetTransactionFields();
         setOpen(true);
     };
 
@@ -187,10 +198,10 @@ export default function CreateHoldingDialog(props) {
                     .then((res) => {
                         const newHolding = res.data;
                         const afterTx = (tx) => {
-                            props.setHoldings([...props.holdings, { ...newHolding, transactions: tx ? [tx] : [] }]);
+                            props.setHoldings?.([...props.holdings, { ...newHolding, transactions: tx ? [tx] : [] }]);
                             setAddLoading(false);
                             setOpen(false);
-                            props.snackbarRef.current.showSnackbar("success", "Holding added");
+                            props.snackbarRef?.current.showSnackbar("success", "Holding added");
                         };
 
                         if (skipTransaction || !units || !price || !date) {
@@ -217,11 +228,14 @@ export default function CreateHoldingDialog(props) {
 
     return (
         <div>
-            <Tooltip title="Add holding" onClick={handleClickOpen}>
-                <IconButton aria-label="add" size="large">
-                    <AddIcon />
-                </IconButton>
-            </Tooltip>
+            {/* Only render the icon button when used standalone (not triggered externally) */}
+            {props.showTrigger !== false && (
+                <Tooltip title="Add holding" onClick={handleClickOpen}>
+                    <IconButton aria-label="add" size="large">
+                        <AddIcon />
+                    </IconButton>
+                </Tooltip>
+            )}
             <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
                 {step === 1 && (
                     <>
@@ -349,4 +363,6 @@ export default function CreateHoldingDialog(props) {
             </Dialog>
         </div>
     );
-}
+});
+
+export default CreateHoldingDialog;
