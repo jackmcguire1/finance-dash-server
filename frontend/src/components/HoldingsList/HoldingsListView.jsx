@@ -1,5 +1,4 @@
 import Paper from "@mui/material/Paper";
-import makeStyles from "@mui/styles/makeStyles";
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
@@ -7,11 +6,7 @@ import { AccountContext } from "../Account";
 import ContentLoading from "../ContentLoading";
 import HoldingsTable from "./HoldingsTable";
 
-const useStyles = makeStyles((_theme) => ({}));
-
 export default function HoldingsListView() {
-    const classes = useStyles();
-
     const [holdings, setHoldings] = useState([]);
     const [contentLoading, setContentLoading] = useState(true);
     const [authFailed, setAuthFailed] = useState(false);
@@ -43,7 +38,7 @@ export default function HoldingsListView() {
             {contentLoading ? (
                 <ContentLoading />
             ) : (
-                <div className={classes.root} component={Paper}>
+                <div component={Paper}>
                     <HoldingsTable holdings={holdings} setHoldings={setHoldings} />
                 </div>
             )}

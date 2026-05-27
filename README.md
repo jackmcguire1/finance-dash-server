@@ -65,11 +65,11 @@ This hits CoinGecko for every ticker in the DB and writes the latest prices. The
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18, Vite 6, MUI, React Router v6, visx |
+| Frontend | React 19, Vite 8, MUI v9, React Router v7, Recharts |
 | Backend | Fastify 5, TypeScript, Node 24 |
 | Database | PostgreSQL 17 (local) / RDS PostgreSQL 16 (prod) |
 | Infrastructure | Pulumi TypeScript (single stack) |
-| Auth | AWS Cognito (prod) / mock bypass (local) |
+| Auth | Firebase Auth (prod + local emulator) |
 | Hosting | Lambda Web Adapter + Lambda Function URL, S3 + CloudFront |
 
 ## Project layout

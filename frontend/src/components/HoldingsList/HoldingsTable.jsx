@@ -14,9 +14,7 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import makeStyles from "@mui/styles/makeStyles";
 import axios from "axios";
-import clsx from "clsx";
 import { auth } from "../../firebase";
 import PropTypes from "prop-types";
 import React, { useRef } from "react";
@@ -64,8 +62,20 @@ const headCells = [
     { id: "market_value_total_change", numeric: false, disablePadding: false, label: "Gain total", width: "13%" },
 ];
 
+const visuallyHiddenSx = {
+    border: 0,
+    clip: "rect(0 0 0 0)",
+    height: 1,
+    margin: -1,
+    overflow: "hidden",
+    padding: 0,
+    position: "absolute",
+    top: 20,
+    width: 1,
+};
+
 function EnhancedTableHead(props) {
-    const { classes, onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } = props;
+    const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } = props;
     const createSortHandler = (property) => (event) => {
         onRequestSort(event, property);
     };
@@ -96,7 +106,7 @@ function EnhancedTableHead(props) {
                         >
                             {headCell.label}
                             {orderBy === headCell.id ? (
-                                <span className={classes.visuallyHidden}>
+                                <span style={visuallyHiddenSx}>
                                     {order === "desc" ? "sorted descending" : "sorted ascending"}
                                 </span>
                             ) : null}
@@ -109,7 +119,6 @@ function EnhancedTableHead(props) {
 }
 
 EnhancedTableHead.propTypes = {
-    classes: PropTypes.object.isRequired,
     numSelected: PropTypes.number.isRequired,
     onRequestSort: PropTypes.func.isRequired,
     onSelectAllClick: PropTypes.func.isRequired,
@@ -118,28 +127,7 @@ EnhancedTableHead.propTypes = {
     rowCount: PropTypes.number.isRequired,
 };
 
-const useToolbarStyles = makeStyles((theme) => ({
-    root: {
-        paddingLeft: theme.spacing(2),
-        paddingRight: theme.spacing(1),
-    },
-    highlight:
-        theme.palette.mode === "light"
-            ? {
-                  color: theme.palette.secondary.main,
-                  backgroundColor: lighten(theme.palette.secondary.light, 0.85),
-              }
-            : {
-                  color: theme.palette.text.primary,
-                  backgroundColor: theme.palette.secondary.dark,
-              },
-    title: {
-        flex: "1 1 100%",
-    },
-}));
-
 const EnhancedTableToolbar = (props) => {
-    const classes = useToolbarStyles();
     const { selected, setSelected, holdings, setHoldings } = props;
 
     const snackbarRef = useRef();
@@ -170,16 +158,28 @@ const EnhancedTableToolbar = (props) => {
 
     return (
         <Toolbar
-            className={clsx(classes.root, {
-                [classes.highlight]: numSelected > 0,
+            sx={(theme) => ({
+                pl: 2,
+                pr: 1,
+                ...(numSelected > 0 && theme.palette.mode === "light"
+                    ? {
+                          color: theme.palette.secondary.main,
+                          backgroundColor: lighten(theme.palette.secondary.light, 0.85),
+                      }
+                    : numSelected > 0
+                      ? {
+                            color: theme.palette.text.primary,
+                            backgroundColor: theme.palette.secondary.dark,
+                        }
+                      : {}),
             })}
         >
             {numSelected > 0 ? (
-                <Typography className={classes.title} color="inherit" variant="subtitle1" component="div">
+                <Typography sx={{ flex: "1 1 100%" }} color="inherit" variant="subtitle1" component="div">
                     {numSelected} selected
                 </Typography>
             ) : (
-                <Typography className={classes.title} variant="h6" id="tableTitle" component="div">
+                <Typography sx={{ flex: "1 1 100%" }} variant="h6" id="tableTitle" component="div">
                     Holdings
                 </Typography>
             )}
@@ -201,38 +201,8 @@ EnhancedTableToolbar.propTypes = {
     selected: PropTypes.array.isRequired,
 };
 
-const useStyles = makeStyles((theme) => ({
-    root: {
-        width: "100%",
-    },
-    paper: {
-        width: "100%",
-        marginBottom: theme.spacing(2),
-    },
-    table: {
-        minWidth: 750,
-        height: 600,
-    },
-    visuallyHidden: {
-        border: 0,
-        clip: "rect(0 0 0 0)",
-        height: 1,
-        margin: -1,
-        overflow: "hidden",
-        padding: 0,
-        position: "absolute",
-        top: 20,
-        width: 1,
-    },
-    tickerLogo: {
-        height: 30,
-        verticalAlign: "middle",
-    },
-}));
-
 export default function HoldingsTable(props) {
     const navigate = useNavigate();
-    const classes = useStyles();
     const [order, setOrder] = React.useState("desc");
     const [orderBy, setOrderBy] = React.useState("marketValue");
     const [selected, setSelected] = React.useState([]);
@@ -289,8 +259,8 @@ export default function HoldingsTable(props) {
     const emptyRows = rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
     return (
-        <div className={classes.root}>
-            <Paper className={classes.paper}>
+        <div style={{ width: "100%" }}>
+            <Paper sx={{ width: "100%", mb: 2 }}>
                 <EnhancedTableToolbar
                     selected={selected}
                     setSelected={setSelected}
@@ -299,13 +269,12 @@ export default function HoldingsTable(props) {
                 />
                 <TableContainer>
                     <Table
-                        className={classes.table}
+                        sx={{ minWidth: 750, height: 600 }}
                         aria-labelledby="tableTitle"
                         size="medium"
                         aria-label="enhanced table"
                     >
                         <EnhancedTableHead
-                            classes={classes}
                             numSelected={selected.length}
                             selected={selected}
                             setSelected={setSelected}
@@ -343,8 +312,8 @@ export default function HoldingsTable(props) {
                                                 <img
                                                     src={row.ticker_logo}
                                                     alt="Coin logo"
-                                                    className={classes.tickerLogo}
-                                                ></img>
+                                                    style={{ height: 30, verticalAlign: "middle" }}
+                                                />
                                             </TableCell>
                                             <TableCell>{row.ticker_symbol}</TableCell>
                                             <TableCell>{row.ticker_name}</TableCell>

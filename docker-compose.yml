@@ -57,9 +57,15 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: src/Dockerfile.dev
+      dockerfile: frontend/Dockerfile.dev
     ports:
       - 3000:3000
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - ./frontend/.env:/app/.env
     environment:
       HOST: "0.0.0.0"
       BROWSER: "none"
@@ -68,20 +74,5 @@ services:
       - firebase-emulator
     develop:
       watch:
-        - action: sync
-          path: ./src
-          target: /app/src
-        - action: sync
-          path: ./public
-          target: /app/public
-        - action: sync
-          path: ./index.html
-          target: /app/index.html
-        - action: sync
-          path: ./vite.config.ts
-          target: /app/vite.config.ts
-        - action: sync
-          path: ./.env
-          target: /app/.env
         - action: rebuild
-          path: ./package.json
+          path: ./frontend/package.json

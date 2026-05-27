@@ -8,32 +8,11 @@ import DialogTitle from "@mui/material/DialogTitle";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import TextField from "@mui/material/TextField";
-import makeStyles from "@mui/styles/makeStyles";
 import axios from "axios";
 import React from "react";
 import { auth } from "../firebase";
 
-const useStyles = makeStyles((_theme) => ({
-    horizControlsContainer: {
-        display: "flex",
-        gap: "15px",
-    },
-    formControl: {
-        marginBottom: "20px",
-    },
-    formControlHoriz: {
-        marginBottom: "10px",
-    },
-    formLabelOr: {
-        marginBottom: "20px",
-        display: "flex",
-        alignItems: "center",
-    },
-}));
-
 export default function CreateTransactionDialog(props) {
-    const classes = useStyles();
-
     const endpoint = `${import.meta.env.VITE_API_ENDPOINT}transactions`;
 
     const [open, setOpen] = React.useState(false);
@@ -80,7 +59,7 @@ export default function CreateTransactionDialog(props) {
             <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
                 <DialogTitle id="form-dialog-title">Add transaction</DialogTitle>
                 <DialogContent>
-                    <FormControl variant="filled" className={classes.formControl} fullWidth>
+                    <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                         <InputLabel id="date-label" shrink>
                             Transaction date
                         </InputLabel>
@@ -94,7 +73,7 @@ export default function CreateTransactionDialog(props) {
                             labelId="date-label"
                         ></FilledInput>
                     </FormControl>
-                    <FormControl variant="filled" className={classes.formControl} fullWidth>
+                    <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                         <RadioGroup
                             row
                             aria-label="gender"
@@ -108,7 +87,7 @@ export default function CreateTransactionDialog(props) {
                             <FormControlLabel value="SELL" control={<Radio />} label="Sell" disabled />
                         </RadioGroup>
                     </FormControl>
-                    <FormControl variant="filled" className={classes.formControl} fullWidth>
+                    <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                         <TextField
                             label="Units"
                             id="units-textfield"
@@ -120,8 +99,8 @@ export default function CreateTransactionDialog(props) {
                             }}
                         />
                     </FormControl>
-                    <div className={classes.horizControlsContainer}>
-                        <FormControl variant="filled" className={classes.formControl} fullWidth>
+                    <div style={{ display: "flex", gap: "15px" }}>
+                        <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                             <TextField
                                 label="Total price"
                                 id="price-textfield"
@@ -136,8 +115,8 @@ export default function CreateTransactionDialog(props) {
                                 }}
                             />
                         </FormControl>
-                        <div className={classes.formLabelOr}>OR</div>
-                        <FormControl variant="filled" className={classes.formControl} fullWidth>
+                        <div style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>OR</div>
+                        <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                             <TextField
                                 label="Price per unit"
                                 id="pricepu-textfield"

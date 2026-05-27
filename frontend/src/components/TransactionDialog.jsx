@@ -7,30 +7,12 @@ import DialogTitle from "@mui/material/DialogTitle";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import TextField from "@mui/material/TextField";
-import makeStyles from "@mui/styles/makeStyles";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { auth } from "../firebase";
 
-const useStyles = makeStyles((_theme) => ({
-    horizControlsContainer: {
-        display: "flex",
-        gap: "15px",
-    },
-    formControl: {
-        marginBottom: "20px",
-    },
-    formLabelOr: {
-        marginBottom: "20px",
-        display: "flex",
-        alignItems: "center",
-    },
-}));
-
 // tx: existing transaction object when editing, null when creating
 export default function TransactionDialog({ open, onClose, holdingId, tx, onSaved, snackbarRef }) {
-    const classes = useStyles();
-
     const isEdit = Boolean(tx);
 
     const [buySell, setBuySell] = useState("BUY");
@@ -81,7 +63,7 @@ export default function TransactionDialog({ open, onClose, holdingId, tx, onSave
         <Dialog open={open} onClose={onClose} aria-labelledby="tx-dialog-title">
             <DialogTitle id="tx-dialog-title">{isEdit ? "Edit transaction" : "Add transaction"}</DialogTitle>
             <DialogContent>
-                <FormControl variant="filled" className={classes.formControl} fullWidth>
+                <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                     <InputLabel id="date-label" shrink>
                         Transaction date
                     </InputLabel>
@@ -92,7 +74,7 @@ export default function TransactionDialog({ open, onClose, holdingId, tx, onSave
                         labelId="date-label"
                     />
                 </FormControl>
-                <FormControl variant="filled" className={classes.formControl} fullWidth>
+                <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                     <RadioGroup
                         row
                         value={buySell}
@@ -102,7 +84,7 @@ export default function TransactionDialog({ open, onClose, holdingId, tx, onSave
                         <FormControlLabel value="SELL" control={<Radio />} label="Sell" />
                     </RadioGroup>
                 </FormControl>
-                <FormControl variant="filled" className={classes.formControl} fullWidth>
+                <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                     <TextField
                         label="Units"
                         variant="filled"
@@ -114,8 +96,8 @@ export default function TransactionDialog({ open, onClose, holdingId, tx, onSave
                         }}
                     />
                 </FormControl>
-                <div className={classes.horizControlsContainer}>
-                    <FormControl variant="filled" className={classes.formControl} fullWidth>
+                <div style={{ display: "flex", gap: "15px" }}>
+                    <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                         <TextField
                             label="Total price"
                             variant="filled"
@@ -127,8 +109,8 @@ export default function TransactionDialog({ open, onClose, holdingId, tx, onSave
                             }}
                         />
                     </FormControl>
-                    <div className={classes.formLabelOr}>OR</div>
-                    <FormControl variant="filled" className={classes.formControl} fullWidth>
+                    <div style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>OR</div>
+                    <FormControl variant="filled" sx={{ mb: "20px" }} fullWidth>
                         <TextField
                             label="Price per unit"
                             variant="filled"

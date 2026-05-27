@@ -72,8 +72,9 @@ pulumi stack output dbHost --stack prod
 Requires `PULUMI_ACCESS_TOKEN` + AWS credentials in environment.
 DB password is a Pulumi secret: `pulumi config set --secret dbPassword <value> --stack prod`.
 
-### Frontend (root)
+### Frontend (`frontend/`)
 ```bash
+cd frontend
 npm install
 npm start            # Vite dev server (reads .env for VITE_* vars)
 npm run build        # production build → build/
@@ -85,13 +86,13 @@ Serverless crypto portfolio tracker. Three independent npm projects:
 
 | Directory | Purpose |
 |-----------|---------|
-| `/` (root) | React 18 + Vite 6 frontend |
+| `frontend/` | React 19 + Vite 8 frontend |
 | `server/` | Fastify 5 REST API — runs as Lambda via Lambda Web Adapter |
 | `infra/` | Pulumi TypeScript — all AWS infrastructure in one stack |
 
-### Frontend (`src/`)
+### Frontend (`frontend/`)
 
-Built with **Vite 6** (migrated from Create React App). Uses React 18 (`createRoot`), React Router v6 (`Routes`/`Route element={}`/`useNavigate`), MUI, and `visx` for charts.
+Built with **Vite 8**. Uses React 19 (`createRoot`), React Router v7 (`Routes`/`Route element={}`/`useNavigate`), MUI v9, and `recharts` for charts. Styling uses MUI's `sx` prop and `styled()` — `@mui/styles`/`makeStyles` is not used.
 
 Key env vars (set in `.env` for local, injected by CI for prod):
 - `VITE_API_ENDPOINT` — base URL for the backend (include trailing slash)
@@ -152,8 +153,8 @@ Two views: `get_holding_view`, `list_holdings_view` (latest price per holding vi
 
 ### Auth
 
-- Firebase Auth is used throughout. `src/firebase.js` initialises the Firebase app and exports `auth`.
-- `src/components/Account.js` provides the auth context (`getSession`, `authenticate`, `logout`). Firebase's `user.uid` maps to `accountId` (the role previously played by Cognito `sub`).
+- Firebase Auth is used throughout. `frontend/src/firebase.js` initialises the Firebase app and exports `auth`.
+- `frontend/src/components/Account.js` provides the auth context (`getSession`, `authenticate`, `logout`). Firebase's `user.uid` maps to `accountId` (the role previously played by Cognito `sub`).
 - Locally, `VITE_FIREBASE_EMULATOR=true` connects to the Firebase Auth Emulator at http://localhost:9099. Create a user via the Emulator UI at http://localhost:4000 on first boot.
 - Firebase ID tokens are validated server-side via `firebase-admin` in a Fastify `preHandler` hook (`server/src/auth.ts`). All routes except `/health` and `/coins/list` require `Authorization: Bearer <token>`. The verified `uid` is injected as `req.accountId` — routes never trust a client-supplied `accountId`.
 - For local dev, `FIREBASE_AUTH_EMULATOR_HOST` in the server env points the Admin SDK at the Firebase Auth Emulator so tokens issued by the emulator are accepted.

@@ -16,9 +16,7 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import makeStyles from "@mui/styles/makeStyles";
 import axios from "axios";
-import clsx from "clsx";
 import PropTypes from "prop-types";
 import React from "react";
 import { auth } from "../firebase";
@@ -65,8 +63,20 @@ const headCells = [
     { id: "totalGain", numeric: true, disablePadding: false, label: "Total gain" },
 ];
 
+const visuallyHiddenStyle = {
+    border: 0,
+    clip: "rect(0 0 0 0)",
+    height: 1,
+    margin: -1,
+    overflow: "hidden",
+    padding: 0,
+    position: "absolute",
+    top: 20,
+    width: 1,
+};
+
 function EnhancedTableHead(props) {
-    const { classes, onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } = props;
+    const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } = props;
     const createSortHandler = (property) => (event) => {
         onRequestSort(event, property);
     };
@@ -96,7 +106,7 @@ function EnhancedTableHead(props) {
                         >
                             {headCell.label}
                             {orderBy === headCell.id ? (
-                                <span className={classes.visuallyHidden}>
+                                <span style={visuallyHiddenStyle}>
                                     {order === "desc" ? "sorted descending" : "sorted ascending"}
                                 </span>
                             ) : null}
@@ -109,7 +119,6 @@ function EnhancedTableHead(props) {
 }
 
 EnhancedTableHead.propTypes = {
-    classes: PropTypes.object.isRequired,
     numSelected: PropTypes.number.isRequired,
     onRequestSort: PropTypes.func.isRequired,
     onSelectAllClick: PropTypes.func.isRequired,
@@ -118,28 +127,7 @@ EnhancedTableHead.propTypes = {
     rowCount: PropTypes.number.isRequired,
 };
 
-const useToolbarStyles = makeStyles((theme) => ({
-    root: {
-        paddingLeft: theme.spacing(2),
-        paddingRight: theme.spacing(1),
-    },
-    highlight:
-        theme.palette.mode === "light"
-            ? {
-                  color: theme.palette.secondary.main,
-                  backgroundColor: lighten(theme.palette.secondary.light, 0.85),
-              }
-            : {
-                  color: theme.palette.text.primary,
-                  backgroundColor: theme.palette.secondary.dark,
-              },
-    title: {
-        flex: "1 1 100%",
-    },
-}));
-
 const EnhancedTableToolbar = (props) => {
-    const classes = useToolbarStyles();
     const { selected, setSelected, holdingId, snackbarRef, transactions, setTransactions, onAddClick } = props;
 
     const numSelected = selected.length;
@@ -168,16 +156,28 @@ const EnhancedTableToolbar = (props) => {
 
     return (
         <Toolbar
-            className={clsx(classes.root, {
-                [classes.highlight]: numSelected > 0,
+            sx={(theme) => ({
+                pl: 2,
+                pr: 1,
+                ...(numSelected > 0 && theme.palette.mode === "light"
+                    ? {
+                          color: theme.palette.secondary.main,
+                          backgroundColor: lighten(theme.palette.secondary.light, 0.85),
+                      }
+                    : numSelected > 0
+                      ? {
+                            color: theme.palette.text.primary,
+                            backgroundColor: theme.palette.secondary.dark,
+                        }
+                      : {}),
             })}
         >
             {numSelected > 0 ? (
-                <Typography className={classes.title} color="inherit" variant="subtitle1" component="div">
+                <Typography sx={{ flex: "1 1 100%" }} color="inherit" variant="subtitle1" component="div">
                     {numSelected} selected
                 </Typography>
             ) : (
-                <Typography className={classes.title} variant="h6" id="tableTitle" component="div">
+                <Typography sx={{ flex: "1 1 100%" }} variant="h6" id="tableTitle" component="div">
                     Transactions
                 </Typography>
             )}
@@ -199,32 +199,7 @@ const EnhancedTableToolbar = (props) => {
     );
 };
 
-const useStyles = makeStyles((theme) => ({
-    root: {
-        width: "100%",
-    },
-    paper: {
-        width: "100%",
-        marginBottom: theme.spacing(2),
-    },
-    table: {
-        minWidth: 750,
-    },
-    visuallyHidden: {
-        border: 0,
-        clip: "rect(0 0 0 0)",
-        height: 1,
-        margin: -1,
-        overflow: "hidden",
-        padding: 0,
-        position: "absolute",
-        top: 20,
-        width: 1,
-    },
-}));
-
 export default function TransactionsTable(props) {
-    const classes = useStyles();
     const [order, setOrder] = React.useState("desc");
     const [orderBy, setOrderBy] = React.useState("datetime");
     const [selected, setSelected] = React.useState([]);
@@ -309,8 +284,8 @@ export default function TransactionsTable(props) {
     const emptyRows = rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
     return (
-        <div className={classes.root}>
-            <Paper className={classes.paper}>
+        <div style={{ width: "100%" }}>
+            <Paper sx={{ width: "100%", mb: 2 }}>
                 <EnhancedTableToolbar
                     selected={selected}
                     setSelected={setSelected}
@@ -330,13 +305,12 @@ export default function TransactionsTable(props) {
                 />
                 <TableContainer>
                     <Table
-                        className={classes.table}
+                        sx={{ minWidth: 750 }}
                         aria-labelledby="tableTitle"
                         size="medium"
                         aria-label="enhanced table"
                     >
                         <EnhancedTableHead
-                            classes={classes}
                             numSelected={selected.length}
                             order={order}
                             orderBy={orderBy}

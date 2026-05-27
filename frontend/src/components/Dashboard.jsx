@@ -1,5 +1,5 @@
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutlined";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -51,7 +51,7 @@ function EmptyState({ navigate }) {
             {/* Skeleton metric cards */}
             <Grid container spacing={2} mb={3}>
                 {[0, 1, 2, 3].map((i) => (
-                    <Grid item xs={12} sm={6} md={3} key={i}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
                         <MetricCardSkeleton />
                     </Grid>
                 ))}
@@ -338,7 +338,7 @@ export default function Dashboard() {
 
             {/* Pie chart + top performers */}
             <Grid container spacing={2}>
-                <Grid item xs={12} md={5}>
+                <Grid size={{ xs: 12, md: 5 }}>
                     <Card sx={{ borderRadius: 2, height: "100%" }}>
                         <CardContent>
                             <Typography variant="subtitle1" fontWeight={600} mb={1}>
@@ -351,7 +351,7 @@ export default function Dashboard() {
                     </Card>
                 </Grid>
 
-                <Grid item xs={12} md={7}>
+                <Grid size={{ xs: 12, md: 7 }}>
                     <Card sx={{ borderRadius: 2, height: "100%" }}>
                         <CardContent>
                             <Typography variant="subtitle1" fontWeight={600} mb={1}>
