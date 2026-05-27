@@ -14,7 +14,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Toolbar from '@mui/material/Toolbar';
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
-import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -109,26 +109,22 @@ function AppShell() {
                 <Toolbar />
                 <div className={classes.drawerContainer}>
                     <List disablePadding>
-                        <ListItem
-                            button
-                            key='Dashboard'
+                        <ListItemButton
                             component={NavLink}
                             to="/dashboard"
                             className={({ isActive }) => isActive ? classes.navItemSelected : undefined}
                         >
                             <ListItemIcon><DashboardIcon /></ListItemIcon>
                             <ListItemText primary='Dashboard' />
-                        </ListItem>
-                        <ListItem
-                            button
-                            key='Holdings'
+                        </ListItemButton>
+                        <ListItemButton
                             component={NavLink}
                             to="/holdings"
                             className={({ isActive }) => isActive ? classes.navItemSelected : undefined}
                         >
                             <ListItemIcon><AccountBalanceIcon /></ListItemIcon>
                             <ListItemText primary='Holdings' />
-                        </ListItem>
+                        </ListItemButton>
                     </List>
                 </div>
             </Drawer>

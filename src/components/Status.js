@@ -1,32 +1,45 @@
-import React, { useState, useContext, useEffect, useRef } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { AccountContext } from "./Account";
-import Identicon from "identicon.js";
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import Avatar from "@mui/material/Avatar";
+import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Typography from "@mui/material/Typography";
+import Divider from "@mui/material/Divider";
+import Box from "@mui/material/Box";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import PortfolioImporter from "./ImportExport/PortfolioImporter";
+
+function getInitials(user) {
+    if (user?.displayName) {
+        return user.displayName
+            .split(" ")
+            .map(w => w[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase();
+    }
+    if (user?.email) return user.email[0].toUpperCase();
+    return "?";
+}
+
+function stringToColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = Math.abs(hash) % 360;
+    return `hsl(${h}, 55%, 45%)`;
+}
 
 const Status = () => {
     const navigate = useNavigate();
-    const [svgString, setSvgString] = useState("");
-
-    const { getSession, logout } = useContext(AccountContext);
-
+    const { getSession, logout, user } = useContext(AccountContext);
     const downloadAnchorRef = useRef();
-
-    const [anchorEl, setAnchorEl] = React.useState(null);
-    const [fileDownloadUrl, setFileDownloadUrl] = React.useState("");
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [fileDownloadUrl, setFileDownloadUrl] = useState("");
     const open = Boolean(anchorEl);
-
-    const handleClick = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
 
     const handleLogout = () => {
         logout();
@@ -35,82 +48,57 @@ const Status = () => {
     };
 
     const handleExportPortfolio = () => {
-        console.log("Export portfolio pressed");
         getSession()
             .then((session) => {
                 const endpoint = `${import.meta.env.VITE_API_ENDPOINT}portfolio/export/?accountId=${session.idToken.payload.sub}`;
-                axios.get(endpoint)
-                .then(res => {
-                    console.log(res);
-                    const blob = new Blob([JSON.stringify(res.data)]);
-                    const fileDownloadUrl = URL.createObjectURL(blob);
-                    setFileDownloadUrl(fileDownloadUrl);
-                    downloadAnchorRef.current.click();
-                    URL.revokeObjectURL(fileDownloadUrl);
-                    setFileDownloadUrl("");
-                });
+                return axios.get(endpoint);
             })
-            .catch((err) => {
-                console.error(err);
-            });
+            .then((res) => {
+                const blob = new Blob([JSON.stringify(res.data)]);
+                const url = URL.createObjectURL(blob);
+                setFileDownloadUrl(url);
+                downloadAnchorRef.current.click();
+                URL.revokeObjectURL(url);
+                setFileDownloadUrl("");
+            })
+            .catch(console.error);
     };
 
-    useEffect(() => {
-        getSession()
-            .then((session) => {
-                console.log("Session", session);
-                var options = {
-                    foreground: [0, 0, 0, 255],               // rgba black
-                    background: [255, 255, 255, 255],         // rgba white
-                    margin: 0.2,                              // 20% margin
-                    size: 40,                                // 420px square
-                    format: 'svg'                             // use SVG instead of PNG
-                };
-                const initSvgStr = new Identicon(session.idToken.payload.sub, options).toString();
-                console.log(initSvgStr)
-                setSvgString(
-                    '<img style="border-radius: 50%" width=40 height=40 src="data:image/svg+xml;base64,' + initSvgStr + '">'
-                );
-            })
-            .catch((err) => {
-                console.error(err);
-            });
-    }, [getSession]);
+    const initials = getInitials(user);
+    const avatarColor = user ? stringToColor(user.uid) : "#666";
 
     return (
         <div>
-            <a
-                style={{display: "none"}}
-                href={fileDownloadUrl}
-                download={"portfolio.json"}
-                ref={downloadAnchorRef}
-            >Download</a>
+            <a style={{ display: "none" }} href={fileDownloadUrl} download="portfolio.json" ref={downloadAnchorRef}>
+                Download
+            </a>
+
             <Button
-                id="basic-button"
-                aria-controls={open ? 'basic-menu' : undefined}
-                aria-haspopup="true"
-                aria-expanded={open ? 'true' : undefined}
-                onClick={handleClick}
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                sx={{ p: 0.5, minWidth: 0, borderRadius: 8 }}
             >
-                <div dangerouslySetInnerHTML={{ __html: svgString }} />
+                <Avatar sx={{ bgcolor: avatarColor, width: 36, height: 36, fontSize: 14, fontWeight: 700 }}>
+                    {initials}
+                </Avatar>
             </Button>
+
             <Menu
-                id="basic-menu"
                 anchorEl={anchorEl}
                 open={open}
-                onClose={handleClose}
-                MenuListProps={{
-                    'aria-labelledby': 'basic-button',
-                }}
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
-                }}
-                transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                }}
+                onClose={() => setAnchorEl(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+                PaperProps={{ sx: { minWidth: 200 } }}
             >
+                {user && (
+                    <Box sx={{ px: 2, py: 1.5 }}>
+                        {user.displayName && (
+                            <Typography variant="body2" fontWeight={600}>{user.displayName}</Typography>
+                        )}
+                        <Typography variant="caption" color="text.secondary">{user.email}</Typography>
+                    </Box>
+                )}
+                <Divider />
                 <PortfolioImporter />
                 <MenuItem onClick={handleExportPortfolio}>Export portfolio</MenuItem>
                 <MenuItem onClick={handleLogout}>Logout</MenuItem>

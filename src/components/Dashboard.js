@@ -1,21 +1,90 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
+import Skeleton from '@mui/material/Skeleton';
+import Button from '@mui/material/Button';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { toCurrencyString } from '../utils';
 import HoldingsPieChart from './HoldingsPieChart';
 import ContentLoading from './ContentLoading';
 import { AccountContext } from './Account';
 import { getMVTotalGain, getPurchasePrice } from '../utils/holding';
+
+function MetricCardSkeleton() {
+    return (
+        <Card sx={{ height: '100%', borderRadius: 2 }}>
+            <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Skeleton variant="circular" width={24} height={24} />
+                    <Skeleton width={80} height={16} />
+                </Box>
+                <Skeleton width={120} height={36} />
+                <Skeleton width={90} height={16} sx={{ mt: 0.5 }} />
+            </CardContent>
+        </Card>
+    );
+}
+
+function EmptyState({ navigate }) {
+    return (
+        <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
+            <Typography variant="h5" fontWeight={700} mb={3}>Dashboard</Typography>
+
+            {/* Skeleton metric cards */}
+            <Grid container spacing={2} mb={3}>
+                {[0, 1, 2, 3].map(i => (
+                    <Grid item xs={12} sm={6} md={3} key={i}>
+                        <MetricCardSkeleton />
+                    </Grid>
+                ))}
+            </Grid>
+
+            {/* Empty state prompt */}
+            <Card sx={{ borderRadius: 2 }}>
+                <CardContent>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6, gap: 2 }}>
+                        <AccountBalanceWalletIcon sx={{ fontSize: 56, color: 'text.disabled' }} />
+                        <Typography variant="h6" fontWeight={600}>Nothing to see here yet</Typography>
+                        <Typography variant="body2" color="text.secondary" textAlign="center" maxWidth={360}>
+                            Add your holdings to start tracking your portfolio value, gains, and allocation.
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <Button
+                                variant="contained"
+                                startIcon={<UploadFileIcon />}
+                                onClick={() => navigate('/holdings')}
+                                sx={{
+                                    background: 'linear-gradient(90deg, #740f87, #2421b7)',
+                                    '&:hover': { background: 'linear-gradient(90deg, #8a1aa0, #3530d4)' },
+                                }}
+                            >
+                                Import portfolio
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<AddCircleOutlineIcon />}
+                                onClick={() => navigate('/holdings')}
+                            >
+                                Add holding
+                            </Button>
+                        </Box>
+                    </Box>
+                </CardContent>
+            </Card>
+        </Box>
+    );
+}
 
 function MetricCard({ icon, label, value, sub, subPositive }) {
     const subColor = subPositive === null ? 'text.secondary'
@@ -70,6 +139,7 @@ export default function Dashboard() {
     const [contentLoading, setContentLoading] = useState(true);
     const [authFailed, setAuthFailed] = useState(false);
     const { getSession } = useContext(AccountContext);
+    const navigate = useNavigate();
 
     useEffect(() => {
         getSession()
@@ -114,11 +184,15 @@ export default function Dashboard() {
                 });
                 setContentLoading(false);
             })
-            .catch(() => setAuthFailed(true));
+            .catch((err) => {
+                if (err?.message === 'No authenticated user') setAuthFailed(true);
+                // network/server errors don't redirect — just leave the loading state
+            });
     }, [getSession]);
 
     if (authFailed) return <Navigate to="/login" replace />;
     if (contentLoading) return <ContentLoading />;
+    if (!data || data.holdings.length === 0) return <EmptyState navigate={navigate} />;
 
     const { totalValue, totalGain, totalGainPct, dailyGain, dailyGainPct, sortedByGainPct, pieData } = data;
 

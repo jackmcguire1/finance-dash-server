@@ -73,8 +73,10 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
+# dotenv environment variables file — production secrets only
+.env.production
+.env.production.local
+.env.local
 
 
 ### OSX ###
