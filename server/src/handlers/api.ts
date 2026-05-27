@@ -6,6 +6,7 @@ import { registerAuthHook } from "../auth";
 import { runMigrations } from "../db/migrate";
 import { pool } from "../db/pool";
 import { holdingsRoutes } from "../routes/holdings";
+import { newsRoutes } from "../routes/news";
 import { portfolioRoutes } from "../routes/portfolio";
 import { transactionsRoutes } from "../routes/transactions";
 
@@ -17,9 +18,10 @@ async function start(): Promise<void> {
 
     await runMigrations(pool);
 
-    registerAuthHook(app, ["/health", "/coins/list", "/coins/markets", "/coins/search"]);
+    registerAuthHook(app, ["/health", "/coins/list", "/coins/markets", "/coins/search", "/news"]);
 
     await app.register(holdingsRoutes);
+    await app.register(newsRoutes);
     await app.register(transactionsRoutes);
     await app.register(portfolioRoutes);
 

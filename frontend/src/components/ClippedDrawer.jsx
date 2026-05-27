@@ -1,4 +1,5 @@
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import ArticleIcon from "@mui/icons-material/Article";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import Box from "@mui/material/Box";
@@ -21,6 +22,7 @@ import Dashboard from "./Dashboard";
 import HoldingsListView from "./HoldingsList/HoldingsListView";
 import HoldingView from "./HoldingView";
 import Login from "./Login";
+import NewsView from "./NewsView";
 import Status from "./Status";
 import TickerPricesView from "./TickerPricesView";
 
@@ -30,6 +32,7 @@ const NAV_ITEMS = [
     { to: "/dashboard", icon: <DashboardIcon fontSize="small" />, label: "Dashboard" },
     { to: "/holdings", icon: <AccountBalanceIcon fontSize="small" />, label: "Holdings" },
     { to: "/prices", icon: <ShowChartIcon fontSize="small" />, label: "Prices" },
+    { to: "/news", icon: <ArticleIcon fontSize="small" />, label: "News" },
 ];
 
 function AppShell() {
@@ -199,6 +202,7 @@ function AppShell() {
                         <Route path="/holdings/:holdingId" element={<HoldingView />} />
                         <Route path="/holdings" element={<HoldingsListView />} />
                         <Route path="/prices" element={<TickerPricesView />} />
+                        <Route path="/news" element={<NewsView />} />
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
