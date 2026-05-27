@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updateProfile, signOut, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 
 const AccountContext = createContext();
@@ -39,10 +39,20 @@ const Account = (props) => {
         return { idToken: { payload: { sub: credential.user.uid } } };
     };
 
+    const register = async (email, password, displayName) => {
+        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        if (displayName) {
+            await updateProfile(credential.user, { displayName });
+        }
+        return credential;
+    };
+
+    const resetPassword = (email) => sendPasswordResetEmail(auth, email);
+
     const logout = () => signOut(auth);
 
     return (
-        <AccountContext.Provider value={{ authenticate, getSession, logout, user }}>
+        <AccountContext.Provider value={{ authenticate, register, resetPassword, getSession, logout, user }}>
             {props.children}
         </AccountContext.Provider>
     );
