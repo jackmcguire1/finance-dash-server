@@ -116,6 +116,7 @@ server/src/
     holdings.ts       — GET /coins/list, POST/GET /holdings, GET /holdings/list, POST /holdings/delete
     transactions.ts   — POST /transactions, POST /transactions/delete
     portfolio.ts      — GET /portfolio, GET /portfolio/export, POST /portfolio/import
+    news.ts           — GET /news (aggregates RSS from CoinTelegraph, Decrypt, CoinDesk; 5-min cache)
   services/
     coingecko.ts      — all CoinGecko API calls; geckoHeaders() auto-selects demo vs pro key
   db/
@@ -141,9 +142,7 @@ Single Pulumi stack. Key resources:
 - **API Lambda + Function URL** (CORS: all origins)
 - **Cron Lambda + EventBridge rule** (every 10 minutes)
 - **S3 + CloudFront** — static frontend hosting
-- **Cognito UserPool** — auth (OAuth2 implicit grant, domain: `finance-dash-server`)
-
-Stack outputs used by CI/CD: `apiEndpoint`, `bucketName`, `distributionId`, `distributionDomain`, `cognitoUserPoolId`, `cognitoClientId`, `dbHost`.
+Stack outputs used by CI/CD: `apiEndpoint`, `bucketName`, `distributionId`, `distributionDomain`, `dbHost`.
 
 ### Database Schema
 
@@ -154,10 +153,10 @@ Two views: `get_holding_view`, `list_holdings_view` (latest price per holding vi
 
 ### Auth
 
-- Firebase Auth is used throughout. `frontend/src/firebase.js` initialises the Firebase app and exports `auth`.
-- `frontend/src/components/Account.js` provides the auth context (`getSession`, `authenticate`, `logout`). Firebase's `user.uid` maps to `accountId` (the role previously played by Cognito `sub`).
+- Firebase Auth is used throughout. `frontend/src/firebase.jsx` initialises the Firebase app and exports `auth`.
+- `frontend/src/components/Account.jsx` provides the auth context (`getSession`, `authenticate`, `logout`). Firebase's `user.uid` maps to `accountId`.
 - Locally, `VITE_FIREBASE_EMULATOR=true` connects to the Firebase Auth Emulator at http://localhost:9099. Create a user via the Emulator UI at http://localhost:4000 on first boot.
-- Firebase ID tokens are validated server-side via `firebase-admin` in a Fastify `preHandler` hook (`server/src/auth.ts`). All routes except `/health` and `/coins/list` require `Authorization: Bearer <token>`. The verified `uid` is injected as `req.accountId` — routes never trust a client-supplied `accountId`.
+- Firebase ID tokens are validated server-side via `firebase-admin` in a Fastify `preHandler` hook (`server/src/auth.ts`). All routes except `/health`, `/coins/list`, and `/news` require `Authorization: Bearer <token>`. The verified `uid` is injected as `req.accountId` — routes never trust a client-supplied `accountId`.
 - For local dev, `FIREBASE_AUTH_EMULATOR_HOST` in the server env points the Admin SDK at the Firebase Auth Emulator so tokens issued by the emulator are accepted.
 
 ### External Dependencies

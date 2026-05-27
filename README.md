@@ -1,6 +1,6 @@
 # finance-dash
 
-Crypto portfolio tracker — React 18 frontend, Fastify 5 REST API, PostgreSQL, deployed serverlessly on AWS via Pulumi.
+Crypto portfolio tracker — React 19 frontend, Fastify 5 REST API, PostgreSQL, deployed serverlessly on AWS via Pulumi.
 
 [![PR](https://github.com/robbiejdunn/finance-dash-server/actions/workflows/pr.yml/badge.svg)](https://github.com/robbiejdunn/finance-dash-server/actions/workflows/pr.yml)
 
@@ -75,7 +75,7 @@ This hits CoinGecko for every ticker in the DB and writes the latest prices. The
 ## Project layout
 
 ```
-/               — React 18 frontend (Vite)
+/               — React 19 frontend (Vite)
 server/         — Fastify REST API + cron handler
 infra/          — Pulumi stack (all AWS resources)
 db/schema.sql   — single source of truth for DB schema
