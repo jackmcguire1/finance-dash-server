@@ -44,7 +44,10 @@
         "start": "vite",
         "build": "vite build",
         "preview": "vite preview",
-        "test": "echo \"No tests configured\""
+        "test": "echo \"No tests configured\"",
+        "seed": "./scripts/seed.sh",
+        "reset": "./scripts/reset.sh",
+        "cron": "cd server && npm run cron"
     },
     "browserslist": {
         "production": [
