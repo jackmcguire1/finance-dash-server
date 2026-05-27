@@ -5,7 +5,4 @@ WORKDIR /app/server
 COPY server/package*.json ./
 RUN npm install
 
-COPY server/src ./src
-COPY db ../db
-
 CMD ["npm", "run", "dev"]

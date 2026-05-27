@@ -11,6 +11,11 @@ import CardContent from "@mui/material/CardContent";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import Skeleton from "@mui/material/Skeleton";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import axios from "axios";
 import React, { useContext, useEffect, useState } from "react";
@@ -164,8 +169,8 @@ export default function Dashboard() {
     useEffect(() => {
         getSession()
             .then((session) => {
-                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}portfolio/?accountId=${session.idToken.payload.sub}`;
-                return axios.get(endpoint);
+                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}portfolio/`;
+                return axios.get(endpoint, { headers: { Authorization: `Bearer ${session.token}` } });
             })
             .then((res) => {
                 const combined = res.data.holdings.map((holding) => {
@@ -197,6 +202,7 @@ export default function Dashboard() {
                     totalGainPct,
                     dailyGain,
                     dailyGainPct,
+                    lastPriceUpdate: res.data.lastPriceUpdate,
                     holdings: withValue,
                     sortedByGainPct,
                     pieData: withValue.map((h) => ({
@@ -216,9 +222,9 @@ export default function Dashboard() {
 
     if (authFailed) return <Navigate to="/login" replace />;
     if (contentLoading) return <ContentLoading />;
-    if (!data || data.holdings.length === 0) return <EmptyState navigate={navigate} />;
+    if (!data || data.holdings.length === 0) return <EmptyState navigate={navigate} lastPriceUpdate={data?.lastPriceUpdate} />;
 
-    const { totalValue, totalGain, totalGainPct, dailyGain, dailyGainPct, sortedByGainPct, pieData } = data;
+    const { totalValue, totalGain, totalGainPct, dailyGain, dailyGainPct, lastPriceUpdate, holdings: withValue, sortedByGainPct, pieData } = data;
 
     return (
         <Box sx={{ maxWidth: 1100, mx: "auto" }}>
@@ -265,6 +271,70 @@ export default function Dashboard() {
                     />
                 </Grid>
             </Grid>
+
+            {/* Price snapshot */}
+            <Card sx={{ borderRadius: 2, mb: 3 }}>
+                <CardContent sx={{ pb: "12px !important" }}>
+                    <Typography variant="subtitle1" fontWeight={600} mb={1}>
+                        Price snapshot
+                    </Typography>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Coin</TableCell>
+                                <TableCell align="right">Price</TableCell>
+                                <TableCell align="right">24h change</TableCell>
+                                <TableCell align="right">Market cap</TableCell>
+                                <TableCell align="right">Last updated</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {[...withValue]
+                                .sort((a, b) => b.marketValue - a.marketValue)
+                                .map((h) => {
+                                    const change = parseFloat(h.twenty_four_hour_change) || 0;
+                                    return (
+                                        <TableRow key={h.holding_id}>
+                                            <TableCell>
+                                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                    {h.image_url && (
+                                                        <Box component="img" src={h.image_url} sx={{ width: 18, height: 18 }} />
+                                                    )}
+                                                    <Box>
+                                                        <Typography variant="body2" fontWeight={600} lineHeight={1.2}>
+                                                            {h.ticker_symbol}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {h.ticker_name}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell align="right">
+                                                {toCurrencyString(parseFloat(h.current_price))}
+                                            </TableCell>
+                                            <TableCell align="right">
+                                                <Typography variant="body2" sx={{ color: change >= 0 ? "success.main" : "error.main" }}>
+                                                    {change >= 0 ? "+" : ""}{change.toFixed(2)}%
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell align="right">
+                                                {toCurrencyString(parseFloat(h.market_cap))}
+                                            </TableCell>
+                                            <TableCell align="right">
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {h.price_last_updated
+                                                        ? new Date(h.price_last_updated).toLocaleString()
+                                                        : "—"}
+                                                </Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
             {/* Pie chart + top performers */}
             <Grid container spacing={2}>

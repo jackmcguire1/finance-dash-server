@@ -1,5 +1,6 @@
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -20,6 +21,7 @@ import HoldingsListView from "./HoldingsList/HoldingsListView";
 import HoldingView from "./HoldingView";
 import Login from "./Login";
 import Status from "./Status";
+import TickerPricesView from "./TickerPricesView";
 
 const drawerWidth = 240;
 
@@ -98,26 +100,20 @@ function AppShell() {
                 <Toolbar />
                 <div className={classes.drawerContainer}>
                     <List disablePadding>
-                        <ListItemButton
-                            component={NavLink}
-                            to="/dashboard"
-                            className={({ isActive }) => (isActive ? classes.navItemSelected : undefined)}
-                        >
-                            <ListItemIcon>
-                                <DashboardIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Dashboard" />
-                        </ListItemButton>
-                        <ListItemButton
-                            component={NavLink}
-                            to="/holdings"
-                            className={({ isActive }) => (isActive ? classes.navItemSelected : undefined)}
-                        >
-                            <ListItemIcon>
-                                <AccountBalanceIcon />
-                            </ListItemIcon>
-                            <ListItemText primary="Holdings" />
-                        </ListItemButton>
+                        {[
+                            { to: "/dashboard", icon: <DashboardIcon />, label: "Dashboard" },
+                            { to: "/holdings", icon: <AccountBalanceIcon />, label: "Holdings" },
+                            { to: "/prices", icon: <ShowChartIcon />, label: "Prices" },
+                        ].map(({ to, icon, label }) => (
+                            <NavLink key={to} to={to} style={{ textDecoration: "none", color: "inherit" }}>
+                                {({ isActive }) => (
+                                    <ListItemButton className={isActive ? classes.navItemSelected : undefined}>
+                                        <ListItemIcon>{icon}</ListItemIcon>
+                                        <ListItemText primary={label} />
+                                    </ListItemButton>
+                                )}
+                            </NavLink>
+                        ))}
                     </List>
                 </div>
             </Drawer>
@@ -126,6 +122,7 @@ function AppShell() {
                 <Routes>
                     <Route path="/holdings/:holdingId" element={<HoldingView />} />
                     <Route path="/holdings" element={<HoldingsListView />} />
+                    <Route path="/prices" element={<TickerPricesView />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
@@ -136,7 +133,7 @@ function AppShell() {
 
 export default function ClippedDrawer() {
     return (
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <AppShell />
         </Router>
     );

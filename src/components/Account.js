@@ -22,18 +22,17 @@ const Account = (props) => {
     }, []);
 
     const getSession = async () => {
+        const current = auth.currentUser;
+        if (current) {
+            const token = await current.getIdToken();
+            return { token };
+        }
         return new Promise((resolve, reject) => {
-            // If auth state is already known, resolve immediately
-            const current = auth.currentUser;
-            if (current) {
-                resolve({ idToken: { payload: { sub: current.uid } } });
-                return;
-            }
-            // Otherwise wait for the first auth state event
-            const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
                 unsubscribe();
                 if (firebaseUser) {
-                    resolve({ idToken: { payload: { sub: firebaseUser.uid } } });
+                    const token = await firebaseUser.getIdToken();
+                    resolve({ token });
                 } else {
                     reject(new Error("No authenticated user"));
                 }
@@ -42,8 +41,7 @@ const Account = (props) => {
     };
 
     const authenticate = async (email, password) => {
-        const credential = await signInWithEmailAndPassword(auth, email, password);
-        return { idToken: { payload: { sub: credential.user.uid } } };
+        await signInWithEmailAndPassword(auth, email, password);
     };
 
     const register = async (email, password, displayName) => {

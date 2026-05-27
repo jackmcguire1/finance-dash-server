@@ -24,6 +24,9 @@ services:
     ports:
       - 8080:8080   # Fastify API
       - 9229:9229   # Node inspector (VS Code debugger)
+    volumes:
+      - ./server/src:/app/server/src
+      - ./db:/app/db
     environment:
       PGHOST: postgres
       PGPORT: 5432
@@ -32,17 +35,13 @@ services:
       PGDATABASE: financedashdb
       PORT: 8080
       COINGECKO_API_KEY: xxx
+      FIREBASE_PROJECT_ID: demo-finance-dash
+      FIREBASE_AUTH_EMULATOR_HOST: firebase-emulator:9099
     depends_on:
       postgres:
         condition: service_healthy
     develop:
       watch:
-        - action: sync
-          path: ./server/src
-          target: /app/server/src
-        - action: sync
-          path: ./db
-          target: /app/db
         - action: rebuild
           path: ./server/package.json
 

@@ -1,4 +1,6 @@
+import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import Checkbox from "@mui/material/Checkbox";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -19,8 +21,9 @@ import axios from "axios";
 import clsx from "clsx";
 import PropTypes from "prop-types";
 import React from "react";
+import { auth } from "../firebase";
 import { toCurrencyString, toGainString } from "../utils";
-import CreateTransactionDialog from "./CreateTransactionDialog";
+import TransactionDialog from "./TransactionDialog";
 
 function createData(id, datetime, buySell, units, price, currentPrice, twentyFour, totalGain) {
     return { id, datetime, buySell, units, price, currentPrice, twentyFour, totalGain };
@@ -137,26 +140,28 @@ const useToolbarStyles = makeStyles((theme) => ({
 
 const EnhancedTableToolbar = (props) => {
     const classes = useToolbarStyles();
-    const { selected, setSelected, holdingId, snackbarRef, transactions, setTransactions } = props;
+    const { selected, setSelected, holdingId, snackbarRef, transactions, setTransactions, onAddClick } = props;
 
     const numSelected = selected.length;
 
     const handleDeleteClicked = (_e) => {
         if (numSelected > 0) {
-            const data = {
-                txIds: selected,
-            };
-            axios.post(`${import.meta.env.VITE_API_ENDPOINT}transactions/delete`, data).then((_res) => {
-                setTransactions(transactions.filter((t) => !selected.includes(t.tx_id)));
-                let snackBarMsg;
-                if (numSelected > 1) {
-                    snackBarMsg = `${numSelected} transactions deleted successfully!`;
-                } else {
-                    snackBarMsg = "Transaction deleted successfully!";
-                }
-                snackbarRef.current.showSnackbar("success", snackBarMsg);
-                // reset selected
-                setSelected([]);
+            auth.currentUser.getIdToken().then((token) => {
+                axios
+                    .post(
+                        `${import.meta.env.VITE_API_ENDPOINT}transactions/delete`,
+                        { txIds: selected },
+                        { headers: { Authorization: `Bearer ${token}` } },
+                    )
+                    .then((_res) => {
+                        setTransactions(transactions.filter((t) => !selected.includes(t.tx_id)));
+                        const snackBarMsg =
+                            numSelected > 1
+                                ? `${numSelected} transactions deleted successfully!`
+                                : "Transaction deleted successfully!";
+                        snackbarRef.current.showSnackbar("success", snackBarMsg);
+                        setSelected([]);
+                    });
             });
         }
     };
@@ -185,12 +190,11 @@ const EnhancedTableToolbar = (props) => {
                 </Tooltip>
             )}
 
-            <CreateTransactionDialog
-                holdingId={holdingId}
-                snackbarRef={snackbarRef}
-                setTransactions={setTransactions}
-                transactions={transactions}
-            ></CreateTransactionDialog>
+            <Tooltip title="Add transaction">
+                <IconButton aria-label="add" size="large" onClick={onAddClick}>
+                    <AddIcon />
+                </IconButton>
+            </Tooltip>
         </Toolbar>
     );
 };
@@ -226,6 +230,27 @@ export default function TransactionsTable(props) {
     const [selected, setSelected] = React.useState([]);
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(5);
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+    const [editingTx, setEditingTx] = React.useState(null);
+
+    const handleAddClick = () => {
+        setEditingTx(null);
+        setDialogOpen(true);
+    };
+
+    const handleEditClick = (e, tx) => {
+        e.stopPropagation();
+        setEditingTx(tx);
+        setDialogOpen(true);
+    };
+
+    const handleSaved = (savedTx, isEdit) => {
+        if (isEdit) {
+            props.setTransactions(props.transactions.map((t) => (t.tx_id === savedTx.tx_id ? savedTx : t)));
+        } else {
+            props.setTransactions([...props.transactions, savedTx]);
+        }
+    };
 
     const rows = props.transactions.map((tx) =>
         createData(
@@ -293,6 +318,15 @@ export default function TransactionsTable(props) {
                     snackbarRef={props.snackbarRef}
                     setTransactions={props.setTransactions}
                     transactions={props.transactions}
+                    onAddClick={handleAddClick}
+                />
+                <TransactionDialog
+                    open={dialogOpen}
+                    onClose={() => setDialogOpen(false)}
+                    holdingId={props.holdingId}
+                    tx={editingTx}
+                    onSaved={handleSaved}
+                    snackbarRef={props.snackbarRef}
                 />
                 <TableContainer>
                     <Table
@@ -344,6 +378,21 @@ export default function TransactionsTable(props) {
                                             </TableCell>
                                             <TableCell align="right">
                                                 {toGainString((100 * row.totalGain) / row.price, row.price)}
+                                            </TableCell>
+                                            <TableCell align="right" padding="checkbox">
+                                                <Tooltip title="Edit">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={(e) =>
+                                                            handleEditClick(
+                                                                e,
+                                                                props.transactions.find((t) => t.tx_id === row.id),
+                                                            )
+                                                        }
+                                                    >
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
                                             </TableCell>
                                         </TableRow>
                                     );

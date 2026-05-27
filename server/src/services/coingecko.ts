@@ -33,6 +33,38 @@ export async function fetchCoinsList(): Promise<{ id: string; symbol: string; na
     return data;
 }
 
+export interface MarketCoin {
+    id: string;
+    symbol: string;
+    name: string;
+    image: string;
+    current_price: number;
+    price_change_percentage_24h: number;
+    market_cap: number;
+}
+
+export async function fetchCoinsMarkets(page: number, perPage: number): Promise<MarketCoin[]> {
+    const { data } = await axios.get(`${BASE}/coins/markets`, {
+        headers: geckoHeaders(),
+        params: { vs_currency: "gbp", order: "market_cap_desc", per_page: perPage, page, sparkline: false },
+    });
+    return data;
+}
+
+export async function searchCoins(query: string): Promise<MarketCoin[]> {
+    const { data } = await axios.get(`${BASE}/search`, {
+        headers: geckoHeaders(),
+        params: { query },
+    });
+    const coinIds = (data.coins as { id: string }[]).slice(0, 20).map((c) => c.id).join(",");
+    if (!coinIds) return [];
+    const { data: markets } = await axios.get(`${BASE}/coins/markets`, {
+        headers: geckoHeaders(),
+        params: { vs_currency: "gbp", ids: coinIds, order: "market_cap_desc", per_page: 20, page: 1, sparkline: false },
+    });
+    return markets;
+}
+
 export async function fetchCoinData(coinId: string): Promise<CoinData> {
     const { data } = await axios.get(`${BASE}/coins/${coinId}`, {
         headers: geckoHeaders(),
@@ -84,8 +116,8 @@ export async function fetchHistoricalPrices(coinId: string): Promise<{
 export async function updateTickerPrices(): Promise<void> {
     const client = await pool.connect();
     try {
-        const { rows } = await client.query<{ ticker_id: string; coin_id: string }>(
-            "SELECT ticker_id, coin_id FROM tickers",
+        const { rows } = await client.query<{ coin_id: string; ticker_ids: string[] }>(
+            "SELECT coin_id, array_agg(ticker_id) AS ticker_ids FROM tickers GROUP BY coin_id",
         );
         if (rows.length === 0) return;
 
@@ -102,26 +134,36 @@ export async function updateTickerPrices(): Promise<void> {
         });
 
         const dateStr = new Date().toISOString();
-        await Promise.all(
-            rows.map(async (t) => {
-                const price = data[t.coin_id];
-                if (!price) return;
-                await client.query(
-                    `INSERT INTO ticker_prices (tp_id, ticker_id, datetime, price, twenty_four_hour_change, market_cap, volume, last_updated)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                    [
-                        uuidv4(),
-                        t.ticker_id,
-                        dateStr,
-                        price.gbp,
-                        price.gbp_24h_change,
-                        price.gbp_market_cap,
-                        price.gbp_24h_vol,
-                        dateStr,
-                    ],
-                );
-            }),
-        );
+        const insertRows = rows.flatMap(({ coin_id, ticker_ids }) => {
+            const price = data[coin_id];
+            if (!price) return [];
+            return ticker_ids.map((ticker_id) => ({
+                tp_id: uuidv4(),
+                ticker_id,
+                datetime: dateStr,
+                price: price.gbp,
+                twenty_four_hour_change: price.gbp_24h_change,
+                market_cap: price.gbp_market_cap,
+                volume: price.gbp_24h_vol,
+                last_updated: dateStr,
+            }));
+        });
+        if (insertRows.length > 0) {
+            await client.query(
+                `INSERT INTO ticker_prices (tp_id, ticker_id, datetime, price, twenty_four_hour_change, market_cap, volume, last_updated)
+                 SELECT * FROM unnest($1::uuid[], $2::uuid[], $3::timestamptz[], $4::numeric[], $5::numeric[], $6::numeric[], $7::numeric[], $8::timestamptz[])`,
+                [
+                    insertRows.map((r) => r.tp_id),
+                    insertRows.map((r) => r.ticker_id),
+                    insertRows.map((r) => r.datetime),
+                    insertRows.map((r) => r.price),
+                    insertRows.map((r) => r.twenty_four_hour_change),
+                    insertRows.map((r) => r.market_cap),
+                    insertRows.map((r) => r.volume),
+                    insertRows.map((r) => r.last_updated),
+                ],
+            );
+        }
     } finally {
         client.release();
     }

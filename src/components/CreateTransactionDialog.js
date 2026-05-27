@@ -11,6 +11,7 @@ import TextField from "@mui/material/TextField";
 import makeStyles from "@mui/styles/makeStyles";
 import axios from "axios";
 import React from "react";
+import { auth } from "../firebase";
 
 const useStyles = makeStyles((_theme) => ({
     horizControlsContainer: {
@@ -58,10 +59,14 @@ export default function CreateTransactionDialog(props) {
             units: units,
             price: price,
         };
-        axios.post(endpoint, data).then((res) => {
-            props.setTransactions([...props.transactions, res.data]);
-            setOpen(false);
-            props.snackbarRef.current.showSnackbar("success", "Transaction added successfully!");
+        auth.currentUser.getIdToken().then((token) => {
+            axios
+                .post(endpoint, data, { headers: { Authorization: `Bearer ${token}` } })
+                .then((res) => {
+                    props.setTransactions([...props.transactions, res.data]);
+                    setOpen(false);
+                    props.snackbarRef.current.showSnackbar("success", "Transaction added successfully!");
+                });
         });
     };
 

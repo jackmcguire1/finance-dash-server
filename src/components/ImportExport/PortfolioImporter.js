@@ -38,10 +38,11 @@ const PortfolioImporter = () => {
             getSession()
                 .then((session) => {
                     const endpoint = `${import.meta.env.VITE_API_ENDPOINT}portfolio/import`;
-                    return axios.post(endpoint, {
-                        accountId: session.idToken.payload.sub,
-                        portfolio,
-                    });
+                    return axios.post(
+                        endpoint,
+                        { portfolio },
+                        { headers: { Authorization: `Bearer ${session.token}` } },
+                    );
                 })
                 .then(() => {
                     setStatus("done");

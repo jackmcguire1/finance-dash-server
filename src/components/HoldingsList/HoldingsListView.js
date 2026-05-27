@@ -21,11 +21,13 @@ export default function HoldingsListView() {
     useEffect(() => {
         getSession()
             .then((session) => {
-                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}holdings/list/?accountId=${session.idToken.payload.sub}`;
-                axios.get(endpoint).then((res) => {
-                    setHoldings(res.data.items);
-                    setContentLoading(false);
-                });
+                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}holdings/list/`;
+                axios
+                    .get(endpoint, { headers: { Authorization: `Bearer ${session.token}` } })
+                    .then((res) => {
+                        setHoldings(res.data.items);
+                        setContentLoading(false);
+                    });
             })
             .catch((_err) => {
                 setAuthFailed(true);

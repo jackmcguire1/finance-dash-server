@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import makeStyles from "@mui/styles/makeStyles";
 import axios from "axios";
 import clsx from "clsx";
+import { auth } from "../../firebase";
 import PropTypes from "prop-types";
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -147,20 +148,22 @@ const EnhancedTableToolbar = (props) => {
 
     const handleDeleteClicked = (_event) => {
         if (numSelected > 0) {
-            const data = {
-                holdingIds: selected,
-            };
-            axios.post(`${import.meta.env.VITE_API_ENDPOINT}holdings/delete`, data).then((_res) => {
-                setHoldings(holdings.filter((h) => !selected.includes(h.holding_id)));
-                let snackBarMsg;
-                if (numSelected > 1) {
-                    snackBarMsg = `${numSelected} holdings deleted successfully!`;
-                } else {
-                    snackBarMsg = "Holding deleted successfully!";
-                }
-                snackbarRef.current.showSnackbar("success", snackBarMsg);
-                // reset selected
-                setSelected([]);
+            auth.currentUser.getIdToken().then((token) => {
+                axios
+                    .post(
+                        `${import.meta.env.VITE_API_ENDPOINT}holdings/delete`,
+                        { holdingIds: selected },
+                        { headers: { Authorization: `Bearer ${token}` } },
+                    )
+                    .then((_res) => {
+                        setHoldings(holdings.filter((h) => !selected.includes(h.holding_id)));
+                        const snackBarMsg =
+                            numSelected > 1
+                                ? `${numSelected} holdings deleted successfully!`
+                                : "Holding deleted successfully!";
+                        snackbarRef.current.showSnackbar("success", snackBarMsg);
+                        setSelected([]);
+                    });
             });
         }
     };

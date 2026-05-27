@@ -107,8 +107,8 @@ export default function HoldingView() {
     useEffect(() => {
         getSession()
             .then((session) => {
-                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}holdings/?id=${holdingId}&accountId=${session.idToken.payload.sub}`;
-                axios.get(endpoint).then((res) => {
+                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}holdings/?id=${holdingId}`;
+                axios.get(endpoint, { headers: { Authorization: `Bearer ${session.token}` } }).then((res) => {
                     setName(res.data.holding.ticker_name);
                     setSymbol(res.data.holding.ticker_symbol);
                     setImageUrl(res.data.holding.image_url);

@@ -50,8 +50,8 @@ const Status = () => {
     const handleExportPortfolio = () => {
         getSession()
             .then((session) => {
-                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}portfolio/export/?accountId=${session.idToken.payload.sub}`;
-                return axios.get(endpoint);
+                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}portfolio/export/`;
+                return axios.get(endpoint, { headers: { Authorization: `Bearer ${session.token}` } });
             })
             .then((res) => {
                 const blob = new Blob([JSON.stringify(res.data)]);

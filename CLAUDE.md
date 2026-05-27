@@ -155,7 +155,8 @@ Two views: `get_holding_view`, `list_holdings_view` (latest price per holding vi
 - Firebase Auth is used throughout. `src/firebase.js` initialises the Firebase app and exports `auth`.
 - `src/components/Account.js` provides the auth context (`getSession`, `authenticate`, `logout`). Firebase's `user.uid` maps to `accountId` (the role previously played by Cognito `sub`).
 - Locally, `VITE_FIREBASE_EMULATOR=true` connects to the Firebase Auth Emulator at http://localhost:9099. Create a user via the Emulator UI at http://localhost:4000 on first boot.
-- Tokens are not validated server-side; `accountId` is passed as a query/body param.
+- Firebase ID tokens are validated server-side via `firebase-admin` in a Fastify `preHandler` hook (`server/src/auth.ts`). All routes except `/health` and `/coins/list` require `Authorization: Bearer <token>`. The verified `uid` is injected as `req.accountId` — routes never trust a client-supplied `accountId`.
+- For local dev, `FIREBASE_AUTH_EMULATOR_HOST` in the server env points the Admin SDK at the Firebase Auth Emulator so tokens issued by the emulator are accepted.
 
 ### External Dependencies
 

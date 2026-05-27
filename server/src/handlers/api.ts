@@ -2,6 +2,7 @@ import "dotenv/config";
 import cors from "@fastify/cors";
 import sensible from "@fastify/sensible";
 import Fastify from "fastify";
+import { registerAuthHook } from "../auth";
 import { runMigrations } from "../db/migrate";
 import { pool } from "../db/pool";
 import { holdingsRoutes } from "../routes/holdings";
@@ -15,6 +16,8 @@ async function start(): Promise<void> {
     await app.register(sensible);
 
     await runMigrations(pool);
+
+    registerAuthHook(app, ["/health", "/coins/list", "/coins/markets", "/coins/search"]);
 
     await app.register(holdingsRoutes);
     await app.register(transactionsRoutes);

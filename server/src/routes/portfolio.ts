@@ -110,9 +110,9 @@ async function createTransaction(
 }
 
 export async function portfolioRoutes(app: FastifyInstance): Promise<void> {
-    // GET /portfolio?accountId=
-    app.get<{ Querystring: { accountId: string } }>("/portfolio", async (req, reply) => {
-        const { accountId } = req.query;
+    // GET /portfolio
+    app.get("/portfolio", async (req, reply) => {
+        const { accountId } = req;
         const client = await pool.connect();
         try {
             const holdings = await client.query(`SELECT * FROM get_holding_view WHERE account_id = $1`, [accountId]);
@@ -125,15 +125,37 @@ export async function portfolioRoutes(app: FastifyInstance): Promise<void> {
                 `SELECT * FROM transactions WHERE holding_id IN (${placeholders})`,
                 holdingIds,
             );
-            return reply.send({ holdings: holdings.rows, tickerPrices: [], transactions: transactions.rows });
+            const tickerIds = holdings.rows.map((h) => h.ticker_id);
+            const tickerPlaceholders = tickerIds.map((_, i) => `$${i + 1}`).join(", ");
+            const lastUpdatedResult = await client.query<{ ticker_id: string; last_updated: string }>(
+                `SELECT ticker_id, MAX(last_updated) AS last_updated FROM ticker_prices WHERE ticker_id IN (${tickerPlaceholders}) GROUP BY ticker_id`,
+                tickerIds,
+            );
+            const lastUpdatedByTicker = Object.fromEntries(
+                lastUpdatedResult.rows.map((r) => [r.ticker_id, r.last_updated]),
+            );
+            const holdingsWithTimestamp = holdings.rows.map((h) => ({
+                ...h,
+                price_last_updated: lastUpdatedByTicker[h.ticker_id] ?? null,
+            }));
+            const overallLastUpdate = lastUpdatedResult.rows.reduce<string | null>((max, r) => {
+                if (!max || r.last_updated > max) return r.last_updated;
+                return max;
+            }, null);
+            return reply.send({
+                holdings: holdingsWithTimestamp,
+                tickerPrices: [],
+                transactions: transactions.rows,
+                lastPriceUpdate: overallLastUpdate,
+            });
         } finally {
             client.release();
         }
     });
 
-    // GET /portfolio/export?accountId=
-    app.get<{ Querystring: { accountId: string } }>("/portfolio/export", async (req, reply) => {
-        const { accountId } = req.query;
+    // GET /portfolio/export
+    app.get("/portfolio/export", async (req, reply) => {
+        const { accountId } = req;
         const client = await pool.connect();
         try {
             const holdings = await client.query(`SELECT * FROM get_holding_view WHERE account_id = $1`, [accountId]);
@@ -162,14 +184,14 @@ export async function portfolioRoutes(app: FastifyInstance): Promise<void> {
     // POST /portfolio/import
     app.post<{
         Body: {
-            accountId: string;
             portfolio: Array<{
                 coinID: string;
                 transactions: Array<{ buySell: string; datetime: string; units: string; price: string }>;
             }>;
         };
     }>("/portfolio/import", async (req, reply) => {
-        const { accountId, portfolio } = req.body;
+        const { portfolio } = req.body;
+        const { accountId } = req;
         for (const holding of portfolio) {
             const holdingId = await createHolding(holding.coinID, accountId);
             for (const tx of holding.transactions) {
