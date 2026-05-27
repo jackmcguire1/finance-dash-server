@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build server
+        run: npm ci && npm run build
+        working-directory: server
+
+      - name: Deploy infrastructure
+        uses: pulumi/actions@v6
+        with:
+          command: up
+          stack-name: prod
+          work-dir: infra
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-2
+
+      - name: Get stack outputs
+        id: stack
+        working-directory: infra
+        run: |
+          npm ci
+          echo "api_endpoint=$(pulumi stack output apiEndpoint --stack prod)" >> $GITHUB_OUTPUT
+          echo "bucket=$(pulumi stack output bucketName --stack prod)" >> $GITHUB_OUTPUT
+          echo "dist_id=$(pulumi stack output distributionId --stack prod)" >> $GITHUB_OUTPUT
+          echo "db_host=$(pulumi stack output dbHost --stack prod)" >> $GITHUB_OUTPUT
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-2
+
+      - name: Run database migrations
+        run: npm run migrate
+        working-directory: server
+        env:
+          PGHOST: ${{ steps.stack.outputs.db_host }}
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+          PGDATABASE: financedashdb
+
+      - name: Build frontend
+        run: npm ci && npm run build
+        env:
+          VITE_API_ENDPOINT: ${{ steps.stack.outputs.api_endpoint }}
+
+      - name: Deploy frontend to S3
+        run: aws s3 sync build/ s3://${{ steps.stack.outputs.bucket }}/ --delete
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-2
+
+      - name: Invalidate CloudFront
+        run: aws cloudfront create-invalidation --distribution-id ${{ steps.stack.outputs.dist_id }} --paths "/*"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-2

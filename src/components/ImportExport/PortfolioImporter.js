@@ -1,57 +1,99 @@
-import React, { useContext, useRef } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { MenuItem } from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import CircularProgress from "@mui/material/CircularProgress";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 import { AccountContext } from "../Account";
-import axios from 'axios';
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const PortfolioImporter = () => {
     const { getSession } = useContext(AccountContext);
     const fileSelectorRef = useRef();
+    const navigate = useNavigate();
+
+    const [status, setStatus] = useState(null); // null | 'importing' | 'done' | 'error'
 
     const handleImportClicked = (event) => {
         event.preventDefault();
-        console.log("Import portfolio pressed", event);
         fileSelectorRef.current.click();
     };
 
     const importPortfolio = (event) => {
         event.preventDefault();
-        console.log(event);
-        let file = event.target.files[0];
-        console.log(file);
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (f) => {
-                const res = JSON.parse(f.target.result);
-                getSession()
+        const file = event.target.files[0];
+        // Reset so the same file can be re-selected
+        event.target.value = "";
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (f) => {
+            const parsed = JSON.parse(f.target.result);
+            const portfolio = Array.isArray(parsed) ? parsed : parsed.portfolio;
+            setStatus("importing");
+            getSession()
                 .then((session) => {
-                    let endpoint = `${process.env.REACT_APP_FINANCE_DASH_API_ENDPOINT}portfolio/import`;
-                    let requestBody = {
+                    const endpoint = `${import.meta.env.VITE_API_ENDPOINT}portfolio/import`;
+                    return axios.post(endpoint, {
                         accountId: session.idToken.payload.sub,
-                        portfolio: res,
-                    };
-                    axios.post(endpoint, requestBody)
-                    .then(res => {
-                        console.log(res);
+                        portfolio,
                     });
                 })
-                .catch((err) => {
-                    console.error(err);
+                .then(() => {
+                    setStatus("done");
+                    setTimeout(() => {
+                        setStatus(null);
+                        navigate("/holdings");
+                    }, 1500);
+                })
+                .catch(() => {
+                    setStatus("error");
+                    setTimeout(() => setStatus(null), 3000);
                 });
-            };
-            reader.readAsText(file);
-        }
+        };
+        reader.readAsText(file);
     };
 
     return (
         <>
             <input
-                style={{display: "none"}}
+                style={{ display: "none" }}
                 ref={fileSelectorRef}
                 type="file"
-                name="portfolioImportFile"
-                onChange={(e) => importPortfolio(e)}
+                accept=".json"
+                onChange={importPortfolio}
             />
             <MenuItem onClick={handleImportClicked}>Import portfolio</MenuItem>
+
+            <Dialog open={status !== null} PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
+                <DialogContent>
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 2, px: 3, minWidth: 220 }}>
+                        {status === "importing" && (
+                            <>
+                                <CircularProgress size={48} />
+                                <Typography variant="body1" fontWeight={500}>Importing portfolio…</Typography>
+                            </>
+                        )}
+                        {status === "done" && (
+                            <>
+                                <CheckCircleOutlineIcon sx={{ fontSize: 48, color: "success.main" }} />
+                                <Typography variant="body1" fontWeight={500}>Import complete!</Typography>
+                            </>
+                        )}
+                        {status === "error" && (
+                            <>
+                                <ErrorOutlineIcon sx={{ fontSize: 48, color: "error.main" }} />
+                                <Typography variant="body1" fontWeight={500}>Import failed</Typography>
+                                <Typography variant="body2" color="text.secondary">Check the file format and try again.</Typography>
+                            </>
+                        )}
+                    </Box>
+                </DialogContent>
+            </Dialog>
         </>
     );
 };

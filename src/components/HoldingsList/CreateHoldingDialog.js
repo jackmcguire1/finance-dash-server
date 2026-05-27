@@ -12,7 +12,7 @@ import Pagination from '@mui/material/Pagination';
 import AddIcon from '@mui/icons-material/Add';
 import CircularProgress from '@mui/material/CircularProgress';
 import { AccountContext } from "../Account";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
     formControl: {
@@ -56,7 +56,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function CreateHoldingDialog(props) {
-    let history = useHistory();
+    const navigate = useNavigate();
     const classes = useStyles();
     
     const [open, setOpen] = React.useState(false);
@@ -82,7 +82,7 @@ export default function CreateHoldingDialog(props) {
 
     const handleClickOpen = () => {
         if(coinData.length === 0 ) {
-            const endpoint = "https://api.coingecko.com/api/v3/coins/list";
+            const endpoint = `${import.meta.env.VITE_API_ENDPOINT}coins/list`;
             axios.get(endpoint)
             .then(res => {
                 setCoinData(res.data);
@@ -106,7 +106,7 @@ export default function CreateHoldingDialog(props) {
                     coinId: selected.id,
                     accountId: session.idToken.payload.sub,
                 };
-                const endpoint = `${process.env.REACT_APP_FINANCE_DASH_API_ENDPOINT}holdings`;
+                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}holdings`;
                 axios.post(
                     endpoint,
                     data,
@@ -123,7 +123,7 @@ export default function CreateHoldingDialog(props) {
                     });
             }).catch((err) => {
                 console.log("Not authenticated. Redirecting");
-                history.push("/login");
+                navigate("/login");
             });
     };
 

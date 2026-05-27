@@ -1,0 +1,3 @@
+name: finance-dash
+runtime: nodejs
+description: Finance Dash infrastructure — VPC, RDS, Lambda, CloudFront, Cognito

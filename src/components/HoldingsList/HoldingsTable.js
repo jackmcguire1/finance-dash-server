@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import clsx from 'clsx';
 import { lighten } from '@mui/material/styles';
 import makeStyles from '@mui/styles/makeStyles';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -164,7 +164,7 @@ const EnhancedTableToolbar = (props) => {
                 holdingIds: selected
             };
             axios.post(
-                `${process.env.REACT_APP_FINANCE_DASH_API_ENDPOINT}holdings/delete`,
+                `${import.meta.env.VITE_API_ENDPOINT}holdings/delete`,
                 data
             ).then(res => {
                 console.log(res);
@@ -219,7 +219,7 @@ const EnhancedTableToolbar = (props) => {
 
 
 EnhancedTableToolbar.propTypes = {
-    numSelected: PropTypes.number.isRequired,
+    selected: PropTypes.array.isRequired,
 };
 
 const useStyles = makeStyles((theme) => ({
@@ -253,7 +253,7 @@ const useStyles = makeStyles((theme) => ({
 
 
 export default function HoldingsTable(props) {
-    let history = useHistory();
+    const navigate = useNavigate();
     const classes = useStyles();
     const [order, setOrder] = React.useState('desc');
     const [orderBy, setOrderBy] = React.useState('marketValue');
@@ -279,7 +279,7 @@ export default function HoldingsTable(props) {
     };
 
     const handleRowCLick = (event, id) => {
-        history.push(`/holdings/${id}`);
+        navigate(`/holdings/${id}`);
     }
 
     const handleClick = (event, name) => {
@@ -374,13 +374,13 @@ export default function HoldingsTable(props) {
                                         <TableCell>{toGainString(row.ticker_twenty_four_change, row.ticker_price)}</TableCell>
                                         <TableCell>{toCurrencyString(getUnits(row.transactions) * row.ticker_price)}</TableCell>
                                         <TableCell>
-                                            {toGainString(
+                                            {getPurchasePrice(row.transactions) === 0 ? '—' : toGainString(
                                                     parseFloat(row.ticker_twenty_four_change),
                                                     getPurchasePrice(row.transactions)
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            {toGainString(
+                                            {getPurchasePrice(row.transactions) === 0 ? '—' : toGainString(
                                                     (100 * getMVTotalGain(row.transactions, row.ticker_price) / getPurchasePrice(row.transactions)),
                                                     getPurchasePrice(row.transactions)
                                             )}

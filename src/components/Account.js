@@ -1,65 +1,51 @@
-import React, { createContext } from "react";
-import { CognitoUser, AuthenticationDetails } from "amazon-cognito-identity-js";
-import Pool from "../UserPool";
+import React, { createContext, useState, useEffect } from "react";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 
 const AccountContext = createContext();
 
 const Account = (props) => {
+    // undefined = auth loading, null = signed out, object = signed in
+    const [user, setUser] = useState(undefined);
+
+    useEffect(() => {
+        return onAuthStateChanged(auth, (firebaseUser) => {
+            setUser(firebaseUser ?? null);
+        });
+    }, []);
+
     const getSession = async () => {
-        return await new Promise((resolve, reject) => {
-            const user = Pool.getCurrentUser();
-            if (user) {
-                user.getSession((err, session) => {
-                    if (err) {
-                        reject();
-                    } else {
-                        console.log("Resoving");
-                        resolve(session);
-                    }
-                })
-            } else {
-                console.log("Rejecting");
-                reject();
+        return new Promise((resolve, reject) => {
+            // If auth state is already known, resolve immediately
+            const current = auth.currentUser;
+            if (current) {
+                resolve({ idToken: { payload: { sub: current.uid } } });
+                return;
             }
-        })
-    };
-
-    const authenticate = async (Username, Password) => {
-        return await new Promise((resolve, reject) => {
-            const user = new CognitoUser({ Username, Pool });
-
-            const authDetails = new AuthenticationDetails({ Username, Password });
-    
-            user.authenticateUser(authDetails, {
-                onSuccess: (data) => {
-                    console.log("onSuccess: ", data);
-                    resolve(data);
-                },
-                onFailure: (err) => {
-                    console.error("onFailure: ", err);
-                    reject(err);
-                },
-                newPasswordRequired: (data) => {
-                    console.log("newPasswordRequired: ", data);
-                    resolve(data);
-                },
+            // Otherwise wait for the first auth state event
+            const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+                unsubscribe();
+                if (firebaseUser) {
+                    resolve({ idToken: { payload: { sub: firebaseUser.uid } } });
+                } else {
+                    reject(new Error("No authenticated user"));
+                }
             });
         });
     };
 
-    const logout = () => {
-        console.log("Logging out");
-        const user = Pool.getCurrentUser();
-        if (user) {
-            user.signOut();
-        }
+    const authenticate = async (email, password) => {
+        const credential = await signInWithEmailAndPassword(auth, email, password);
+        return { idToken: { payload: { sub: credential.user.uid } } };
     };
 
+    const logout = () => signOut(auth);
+
     return (
-        <AccountContext.Provider value={{ authenticate, getSession, logout }}>
+        <AccountContext.Provider value={{ authenticate, getSession, logout, user }}>
             {props.children}
         </AccountContext.Provider>
-    )
+    );
 };
 
 export { Account, AccountContext };

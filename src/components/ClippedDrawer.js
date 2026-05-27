@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
     BrowserRouter as Router,
-    Switch,
+    Routes,
     Route,
     NavLink,
-  } from "react-router-dom";
+    Navigate,
+    useLocation,
+} from "react-router-dom";
 import makeStyles from '@mui/styles/makeStyles';
 import Drawer from '@mui/material/Drawer';
 import AppBar from '@mui/material/AppBar';
@@ -17,61 +19,83 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 import HoldingsListView from './HoldingsList/HoldingsListView';
 import HoldingView from './HoldingView';
 import Dashboard from './Dashboard';
 import Status from './Status';
 import Login from './Login';
+import { AccountContext } from './Account';
 
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    display: 'flex',
-  },
-  appBar: {
-    zIndex: theme.zIndex.drawer + 1,
-    background: 'linear-gradient(0deg, rgba(41,3,48,1) 0%, rgba(116,15,135,1) 100%)'
-  },
-  drawer: {
-    width: drawerWidth,
-    flexShrink: 0,
-  },
-  drawerPaper: {
-    width: drawerWidth,
-  },
-  drawerContainer: {
-    overflow: 'auto',
-  },
-  content: {
-    flexGrow: 1,
-    padding: theme.spacing(3),
-  },
-  navItemSelected: {
-    background: 'linear-gradient(0deg, #0a093a 0%, #2421b7 100%)'
-  },
-  nested: {
-    paddingLeft: theme.spacing(4),
-  },
-  titleText: {
-      flex: 1
-  },
+    root: {
+        display: 'flex',
+    },
+    appBar: {
+        zIndex: theme.zIndex.drawer + 1,
+        background: 'linear-gradient(0deg, rgba(41,3,48,1) 0%, rgba(116,15,135,1) 100%)'
+    },
+    drawer: {
+        width: drawerWidth,
+        flexShrink: 0,
+    },
+    drawerPaper: {
+        width: drawerWidth,
+    },
+    drawerContainer: {
+        overflow: 'auto',
+    },
+    content: {
+        flexGrow: 1,
+        padding: theme.spacing(3),
+    },
+    navItemSelected: {
+        background: 'linear-gradient(0deg, #0a093a 0%, #2421b7 100%)'
+    },
+    titleText: {
+        flex: 1
+    },
 }));
 
-export default function ClippedDrawer() {
+function AppShell() {
     const classes = useStyles();
+    const { user } = useContext(AccountContext);
+    const location = useLocation();
+
+    // Still resolving auth state
+    if (user === undefined) {
+        return (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    const isLogin = location.pathname === '/login';
+
+    // Redirect unauthenticated users to login (except when already there)
+    if (!user && !isLogin) {
+        return <Navigate to="/login" replace />;
+    }
+
+    // Redirect authenticated users away from login
+    if (user && isLogin) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    if (isLogin) {
+        return <Login />;
+    }
 
     return (
-        <Router>
-            <div className={classes.root}>
+        <div className={classes.root}>
             <CssBaseline />
             <AppBar position="fixed" className={classes.appBar}>
                 <Toolbar>
-                    <Typography
-                        className={classes.titleText}
-                        variant="h6" 
-                        noWrap
-                    >
+                    <Typography className={classes.titleText} variant="h6" noWrap>
                         Investment Tracker
                     </Typography>
                     <Status />
@@ -80,29 +104,27 @@ export default function ClippedDrawer() {
             <Drawer
                 className={classes.drawer}
                 variant="permanent"
-                classes={{
-                paper: classes.drawerPaper,
-                }}
+                classes={{ paper: classes.drawerPaper }}
             >
                 <Toolbar />
                 <div className={classes.drawerContainer}>
                     <List disablePadding>
-                        <ListItem 
-                            button 
-                            key='Dashboard' 
-                            component={NavLink} 
-                            activeClassName={classes.navItemSelected} 
+                        <ListItem
+                            button
+                            key='Dashboard'
+                            component={NavLink}
                             to="/dashboard"
+                            className={({ isActive }) => isActive ? classes.navItemSelected : undefined}
                         >
                             <ListItemIcon><DashboardIcon /></ListItemIcon>
                             <ListItemText primary='Dashboard' />
                         </ListItem>
-                        <ListItem 
-                            button 
-                            key='Holdings' 
-                            component={NavLink} 
-                            activeClassName={classes.navItemSelected} 
+                        <ListItem
+                            button
+                            key='Holdings'
+                            component={NavLink}
                             to="/holdings"
+                            className={({ isActive }) => isActive ? classes.navItemSelected : undefined}
                         >
                             <ListItemIcon><AccountBalanceIcon /></ListItemIcon>
                             <ListItemText primary='Holdings' />
@@ -112,22 +134,21 @@ export default function ClippedDrawer() {
             </Drawer>
             <main className={classes.content}>
                 <Toolbar />
-                <Switch>
-                    <Route path="/holdings/:holdingId">
-                        <HoldingView />
-                    </Route>
-                    <Route path="/holdings">
-                        <HoldingsListView />
-                    </Route>
-                    <Route path="/dashboard">
-                        <Dashboard />
-                    </Route>
-                    <Route path="/login">
-                        <Login />
-                    </Route>
-                </Switch>
+                <Routes>
+                    <Route path="/holdings/:holdingId" element={<HoldingView />} />
+                    <Route path="/holdings" element={<HoldingsListView />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
             </main>
-            </div>
+        </div>
+    );
+}
+
+export default function ClippedDrawer() {
+    return (
+        <Router>
+            <AppShell />
         </Router>
-  );
+    );
 }

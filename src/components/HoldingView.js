@@ -12,7 +12,7 @@ import ContentLoading from './ContentLoading';
 import { CustomSnackBar } from './CustomSnackBar';
 import { getUnits, getPurchasePrice, getMVTotalGain } from '../utils/holding'
 import { AccountContext } from "./Account";
-import  { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -108,7 +108,7 @@ export default function HoldingView() {
     useEffect(() => {
         getSession()
             .then((session) => {
-                const endpoint = `${process.env.REACT_APP_FINANCE_DASH_API_ENDPOINT}holdings/?id=${holdingId}&accountId=${session.idToken.payload.sub}`;
+                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}holdings/?id=${holdingId}&accountId=${session.idToken.payload.sub}`;
                 axios.get(endpoint)
                 .then(res => {
                     setName(res.data.holding.ticker_name);
@@ -134,7 +134,7 @@ export default function HoldingView() {
     }, [holdingId, getSession]);
 
     if (authFailed) {
-        return <Redirect to='/login' />
+        return <Navigate to='/login' replace />
     }
 
     return (

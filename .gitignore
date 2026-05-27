@@ -128,14 +128,9 @@ $RECYCLE.BIN/
 
 # End of https://www.gitignore.io/api/osx,node,linux,windows
 
-# AWS SAM
-.aws-sam
-lib/*.js
-lib/*.d.ts
-bin/*.js
-bin/*.ts
-
-# CDK
-**/cdk.out
-
+# Build outputs
+**/dist/
 **/build
+
+# Pulumi
+**/cdk.out

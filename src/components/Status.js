@@ -4,12 +4,12 @@ import Identicon from "identicon.js";
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import PortfolioImporter from "./ImportExport/PortfolioImporter";
 
 const Status = () => {
-    let history = useHistory();
+    const navigate = useNavigate();
     const [svgString, setSvgString] = useState("");
 
     const { getSession, logout } = useContext(AccountContext);
@@ -31,14 +31,14 @@ const Status = () => {
     const handleLogout = () => {
         logout();
         setAnchorEl(null);
-        history.push("/login");
+        navigate("/login");
     };
 
     const handleExportPortfolio = () => {
         console.log("Export portfolio pressed");
         getSession()
             .then((session) => {
-                const endpoint = `${process.env.REACT_APP_FINANCE_DASH_API_ENDPOINT}portfolio/export/?accountId=${session.idToken.payload.sub}`;
+                const endpoint = `${import.meta.env.VITE_API_ENDPOINT}portfolio/export/?accountId=${session.idToken.payload.sub}`;
                 axios.get(endpoint)
                 .then(res => {
                     console.log(res);

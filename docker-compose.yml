@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - 5435:5432
+    volumes:
+      - ~/apps/postgres-finance-dash:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: financedashdb
+      POSTGRES_HOST_AUTH_METHOD: password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile.dev
+    ports:
+      - 8080:8080   # Fastify API
+      - 9229:9229   # Node inspector (VS Code debugger)
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: financedashdb
+      PORT: 8080
+      COINGECKO_API_KEY: xxx
+    depends_on:
+      postgres:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./server/src
+          target: /app/server/src
+        - action: sync
+          path: ./db
+          target: /app/db
+        - action: rebuild
+          path: ./server/package.json
+
+  firebase-emulator:
+    image: andreysenov/firebase-tools:latest
+    command: firebase emulators:start --only auth --project demo-finance-dash
+    ports:
+      - 9099:9099   # Auth emulator
+      - 4000:4000   # Emulator UI
+    volumes:
+      - ./firebase.json:/home/node/firebase.json
+
+  frontend:
+    build:
+      context: .
+      dockerfile: src/Dockerfile.dev
+    ports:
+      - 3000:3000
+    environment:
+      HOST: "0.0.0.0"
+      BROWSER: "none"
+    depends_on:
+      - server
+      - firebase-emulator
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: sync
+          path: ./public
+          target: /app/public
+        - action: sync
+          path: ./index.html
+          target: /app/index.html
+        - action: sync
+          path: ./vite.config.ts
+          target: /app/vite.config.ts
+        - action: sync
+          path: ./.env
+          target: /app/.env
+        - action: rebuild
+          path: ./package.json

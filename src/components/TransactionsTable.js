@@ -154,7 +154,7 @@ const EnhancedTableToolbar = (props) => {
                 txIds: selected
             };
             axios.post(
-                `${process.env.REACT_APP_FINANCE_DASH_API_ENDPOINT}transactions/delete`,
+                `${import.meta.env.VITE_API_ENDPOINT}transactions/delete`,
                 data
             ).then(res => {
                 console.log(res);

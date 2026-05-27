@@ -1,0 +1,34 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach to server (Docker)",
+            "type": "node",
+            "request": "attach",
+            "port": 9229,
+            "address": "localhost",
+            "localRoot": "${workspaceFolder}/server",
+            "remoteRoot": "/app/server",
+            "restart": true,
+            "sourceMaps": true,
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Debug frontend (Chrome)",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}",
+            "sourceMapPathOverrides": {
+                "/@fs/*": "/*",
+                "/src/*": "${workspaceFolder}/src/*"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Full stack",
+            "configurations": ["Attach to server (Docker)", "Debug frontend (Chrome)"]
+        }
+    ]
+}

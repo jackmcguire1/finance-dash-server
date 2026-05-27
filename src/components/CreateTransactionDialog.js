@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
 export default function CreateTransactionDialog(props) {
     const classes = useStyles();
 
-    const endpoint = `${process.env.REACT_APP_FINANCE_DASH_API_ENDPOINT}transactions`;
+    const endpoint = `${import.meta.env.VITE_API_ENDPOINT}transactions`;
     
     const [open, setOpen] = React.useState(false);
     const [buySell, setBuySell] = React.useState('BUY');

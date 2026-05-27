@@ -1,0 +1,27 @@
+{
+  "accountId": "local-dev-user-0",
+  "portfolio": [
+    {
+      "coinID": "bitcoin",
+      "transactions": [
+        { "buySell": "buy",  "datetime": "2024-01-15T10:00:00.000Z", "units": "0.5",  "price": "35000" },
+        { "buySell": "buy",  "datetime": "2024-06-01T09:00:00.000Z", "units": "0.25", "price": "62000" },
+        { "buySell": "sell", "datetime": "2024-09-10T14:00:00.000Z", "units": "0.1",  "price": "58000" }
+      ]
+    },
+    {
+      "coinID": "ethereum",
+      "transactions": [
+        { "buySell": "buy", "datetime": "2024-02-01T11:00:00.000Z", "units": "2",   "price": "2200" },
+        { "buySell": "buy", "datetime": "2024-07-15T08:00:00.000Z", "units": "1.5", "price": "3100" }
+      ]
+    },
+    {
+      "coinID": "solana",
+      "transactions": [
+        { "buySell": "buy", "datetime": "2024-03-20T12:00:00.000Z", "units": "10", "price": "150" },
+        { "buySell": "buy", "datetime": "2024-11-01T10:00:00.000Z", "units": "5",  "price": "180" }
+      ]
+    }
+  ]
+}

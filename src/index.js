@@ -1,13 +1,10 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import './index.css';
 import ClippedDrawer from './components/ClippedDrawer';
 import reportWebVitals from './reportWebVitals';
 import { createTheme, ThemeProvider, StyledEngineProvider } from '@mui/material';
-
-import Login from './components/Login';
 import { Account } from "./components/Account";
-import Status from './components/Status';
 
 const theme = createTheme({
     palette: {
@@ -21,25 +18,17 @@ const theme = createTheme({
     }
 });
 
-ReactDOM.render(
+const root = createRoot(document.getElementById('root'));
+root.render(
     <React.StrictMode>
         <StyledEngineProvider injectFirst>
             <ThemeProvider theme={theme}>
                 <Account>
                     <ClippedDrawer />
                 </Account>
-        {/* <Account>
-            <Status />
-            <Login />
-        </Account> */}
-        
-      </ThemeProvider>
-    </StyledEngineProvider>
-  </React.StrictMode>,
-  document.getElementById('root')
+            </ThemeProvider>
+        </StyledEngineProvider>
+    </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
