@@ -11,21 +11,13 @@ function geckoHeaders(): Record<string, string> {
     return key.startsWith("CG-") ? { "x-cg-demo-api-key": key } : { "x-cg-pro-api-key": key };
 }
 
-export interface CoinData {
-    name: string;
-    symbol: string;
-    currentPrice: number;
-    twentyFourHourChange: number;
-    marketCap: number;
-    volume: number;
-    imageUrl: string;
-}
-
 export interface TickerPrice {
     gbp: number;
     gbp_24h_change: number;
     gbp_market_cap: number;
     gbp_24h_vol: number;
+    usd: number;
+    eur: number;
 }
 
 export async function fetchCoinsList(): Promise<{ id: string; symbol: string; name: string }[]> {
@@ -43,15 +35,15 @@ export interface MarketCoin {
     market_cap: number;
 }
 
-export async function fetchCoinsMarkets(page: number, perPage: number): Promise<MarketCoin[]> {
+export async function fetchCoinsMarkets(page: number, perPage: number, currency = "gbp"): Promise<MarketCoin[]> {
     const { data } = await axios.get(`${BASE}/coins/markets`, {
         headers: geckoHeaders(),
-        params: { vs_currency: "gbp", order: "market_cap_desc", per_page: perPage, page, sparkline: false },
+        params: { vs_currency: currency, order: "market_cap_desc", per_page: perPage, page, sparkline: false },
     });
     return data;
 }
 
-export async function searchCoins(query: string): Promise<MarketCoin[]> {
+export async function searchCoins(query: string, currency = "gbp"): Promise<MarketCoin[]> {
     const { data } = await axios.get(`${BASE}/search`, {
         headers: geckoHeaders(),
         params: { query },
@@ -60,9 +52,21 @@ export async function searchCoins(query: string): Promise<MarketCoin[]> {
     if (!coinIds) return [];
     const { data: markets } = await axios.get(`${BASE}/coins/markets`, {
         headers: geckoHeaders(),
-        params: { vs_currency: "gbp", ids: coinIds, order: "market_cap_desc", per_page: 20, page: 1, sparkline: false },
+        params: { vs_currency: currency, ids: coinIds, order: "market_cap_desc", per_page: 20, page: 1, sparkline: false },
     });
     return markets;
+}
+
+export interface CoinData {
+    name: string;
+    symbol: string;
+    currentPrice: number;
+    currentPriceUsd: number;
+    currentPriceEur: number;
+    twentyFourHourChange: number;
+    marketCap: number;
+    volume: number;
+    imageUrl: string;
 }
 
 export async function fetchCoinData(coinId: string): Promise<CoinData> {
@@ -80,6 +84,8 @@ export async function fetchCoinData(coinId: string): Promise<CoinData> {
         name: data.name,
         symbol: (data.symbol as string).toUpperCase(),
         currentPrice: data.market_data.current_price.gbp,
+        currentPriceUsd: data.market_data.current_price.usd,
+        currentPriceEur: data.market_data.current_price.eur,
         twentyFourHourChange: data.market_data.price_change_24h,
         marketCap: data.market_data.market_cap.gbp,
         volume: data.market_data.total_volume.gbp,
@@ -92,7 +98,7 @@ export async function fetchSimplePrice(coinId: string): Promise<TickerPrice> {
         headers: geckoHeaders(),
         params: {
             ids: coinId,
-            vs_currencies: "gbp",
+            vs_currencies: "gbp,usd,eur",
             include_24hr_change: true,
             include_market_cap: true,
             include_24hr_vol: true,
@@ -126,7 +132,7 @@ export async function updateTickerPrices(): Promise<void> {
             headers: geckoHeaders(),
             params: {
                 ids: coinIds,
-                vs_currencies: "gbp",
+                vs_currencies: "gbp,usd,eur",
                 include_24hr_change: true,
                 include_market_cap: true,
                 include_24hr_vol: true,
@@ -142,6 +148,8 @@ export async function updateTickerPrices(): Promise<void> {
                 ticker_id,
                 datetime: dateStr,
                 price: price.gbp,
+                price_usd: price.usd,
+                price_eur: price.eur,
                 twenty_four_hour_change: price.gbp_24h_change,
                 market_cap: price.gbp_market_cap,
                 volume: price.gbp_24h_vol,
@@ -150,13 +158,15 @@ export async function updateTickerPrices(): Promise<void> {
         });
         if (insertRows.length > 0) {
             await client.query(
-                `INSERT INTO ticker_prices (tp_id, ticker_id, datetime, price, twenty_four_hour_change, market_cap, volume, last_updated)
-                 SELECT * FROM unnest($1::uuid[], $2::uuid[], $3::timestamptz[], $4::numeric[], $5::numeric[], $6::numeric[], $7::numeric[], $8::timestamptz[])`,
+                `INSERT INTO ticker_prices (tp_id, ticker_id, datetime, price, price_usd, price_eur, twenty_four_hour_change, market_cap, volume, last_updated)
+                 SELECT * FROM unnest($1::uuid[], $2::uuid[], $3::timestamptz[], $4::numeric[], $5::numeric[], $6::numeric[], $7::numeric[], $8::numeric[], $9::numeric[], $10::timestamptz[])`,
                 [
                     insertRows.map((r) => r.tp_id),
                     insertRows.map((r) => r.ticker_id),
                     insertRows.map((r) => r.datetime),
                     insertRows.map((r) => r.price),
+                    insertRows.map((r) => r.price_usd),
+                    insertRows.map((r) => r.price_eur),
                     insertRows.map((r) => r.twenty_four_hour_change),
                     insertRows.map((r) => r.market_cap),
                     insertRows.map((r) => r.volume),

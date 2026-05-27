@@ -21,6 +21,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { auth } from "../firebase";
 import { toCurrencyString, toGainString } from "../utils";
+import { useCurrency } from "./Currency";
 import TransactionDialog from "./TransactionDialog";
 
 function createData(id, datetime, buySell, units, price, currentPrice, twentyFour, totalGain) {
@@ -200,6 +201,7 @@ const EnhancedTableToolbar = (props) => {
 };
 
 export default function TransactionsTable(props) {
+    const { symbol } = useCurrency();
     const [order, setOrder] = React.useState("desc");
     const [orderBy, setOrderBy] = React.useState("datetime");
     const [selected, setSelected] = React.useState([]);
@@ -345,13 +347,13 @@ export default function TransactionsTable(props) {
                                             </TableCell>
                                             <TableCell align="right">{row.buySell}</TableCell>
                                             <TableCell align="right">{row.units}</TableCell>
-                                            <TableCell align="right">{toCurrencyString(row.price)}</TableCell>
-                                            <TableCell align="right">{toCurrencyString(row.currentPrice)}</TableCell>
+                                            <TableCell align="right">{toCurrencyString(row.price, symbol)}</TableCell>
+                                            <TableCell align="right">{toCurrencyString(row.currentPrice, symbol)}</TableCell>
                                             <TableCell align="right">
-                                                {toGainString(row.twentyFour, row.price)}
+                                                {toGainString(row.twentyFour, row.price, symbol)}
                                             </TableCell>
                                             <TableCell align="right">
-                                                {toGainString((100 * row.totalGain) / row.price, row.price)}
+                                                {toGainString((100 * row.totalGain) / row.price, row.price, symbol)}
                                             </TableCell>
                                             <TableCell align="right" padding="checkbox">
                                                 <Tooltip title="Edit">

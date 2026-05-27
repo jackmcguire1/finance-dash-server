@@ -28,9 +28,10 @@ import axios from "axios";
 import React, { forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toCurrencyString } from "../../utils";
+import { useCurrency } from "../Currency";
 import { AccountContext } from "../Account";
 
-function CoinPickerTable({ coins, loading, selected, onSelect }) {
+function CoinPickerTable({ coins, loading, selected, onSelect, symbol }) {
     if (loading) {
         return (
             <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 300 }}>
@@ -84,7 +85,7 @@ function CoinPickerTable({ coins, loading, selected, onSelect }) {
                                     </Box>
                                 </TableCell>
                                 <TableCell align="right">
-                                    {coin.current_price != null ? toCurrencyString(coin.current_price) : "—"}
+                                    {coin.current_price != null ? toCurrencyString(coin.current_price, symbol) : "—"}
                                 </TableCell>
                                 <TableCell align="right">
                                     <Typography variant="body2" sx={{ color: change >= 0 ? "success.main" : "error.main" }}>
@@ -92,7 +93,7 @@ function CoinPickerTable({ coins, loading, selected, onSelect }) {
                                     </Typography>
                                 </TableCell>
                                 <TableCell align="right">
-                                    {coin.market_cap != null ? toCurrencyString(coin.market_cap) : "—"}
+                                    {coin.market_cap != null ? toCurrencyString(coin.market_cap, symbol) : "—"}
                                 </TableCell>
                             </TableRow>
                         );
@@ -126,6 +127,7 @@ const CreateHoldingDialog = forwardRef(function CreateHoldingDialog(props, ref) 
     const [date, setDate] = useState("");
 
     const { getSession } = useContext(AccountContext);
+    const { currency, symbol } = useCurrency();
 
     // Expose openWithCoin(coin) so TickerPricesView can skip step 1
     useImperativeHandle(ref, () => ({
@@ -138,14 +140,14 @@ const CreateHoldingDialog = forwardRef(function CreateHoldingDialog(props, ref) 
     }));
 
     useEffect(() => {
-        if (open && step === 1 && topCoins.length === 0) {
+        if (open && step === 1) {
             setCoinsLoading(true);
             axios
-                .get(`${import.meta.env.VITE_API_ENDPOINT}coins/markets?perPage=25`)
+                .get(`${import.meta.env.VITE_API_ENDPOINT}coins/markets?perPage=25&currency=${currency}`)
                 .then((res) => { setTopCoins(res.data); setCoinsLoading(false); })
                 .catch(() => setCoinsLoading(false));
         }
-    }, [open, step]);
+    }, [open, step, currency]);
 
     const resetTransactionFields = () => {
         setBuySell("BUY");
@@ -166,7 +168,7 @@ const CreateHoldingDialog = forwardRef(function CreateHoldingDialog(props, ref) 
         setSearchLoading(true);
         searchTimeout.current = setTimeout(() => {
             axios
-                .get(`${import.meta.env.VITE_API_ENDPOINT}coins/search?q=${encodeURIComponent(value)}`)
+                .get(`${import.meta.env.VITE_API_ENDPOINT}coins/search?q=${encodeURIComponent(value)}&currency=${currency}`)
                 .then((res) => { setSearchCoins(res.data); setSearchLoading(false); })
                 .catch(() => setSearchLoading(false));
         }, 400);
@@ -272,6 +274,7 @@ const CreateHoldingDialog = forwardRef(function CreateHoldingDialog(props, ref) 
                                 loading={isLoading}
                                 selected={selected}
                                 onSelect={setSelected}
+                                symbol={symbol}
                             />
                         </DialogContent>
                         <DialogActions>

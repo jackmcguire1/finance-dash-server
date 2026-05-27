@@ -23,6 +23,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { toCurrencyString } from "../utils";
 import { getMVTotalGain, getPurchasePrice } from "../utils/holding";
 import { AccountContext } from "./Account";
+import { useCurrency } from "./Currency";
 import ContentLoading from "./ContentLoading";
 import HoldingsPieChart from "./HoldingsPieChart";
 
@@ -119,7 +120,7 @@ function MetricCard({ icon, label, value, sub, subPositive }) {
     );
 }
 
-function TopHoldingRow({ holding, rank }) {
+function TopHoldingRow({ holding, rank, symbol }) {
     const gain = holding.totalGain;
     const gainPct = holding.totalGainPct;
     const positive = gain >= 0;
@@ -147,11 +148,11 @@ function TopHoldingRow({ holding, rank }) {
             </Box>
             <Box sx={{ textAlign: "right" }}>
                 <Typography variant="body2" fontWeight={600}>
-                    {toCurrencyString(holding.marketValue)}
+                    {toCurrencyString(holding.marketValue, symbol)}
                 </Typography>
                 <Typography variant="caption" sx={{ color: positive ? "success.main" : "error.main" }}>
                     {positive ? "+" : ""}
-                    {toCurrencyString(Math.abs(gain))} ({positive ? "+" : ""}
+                    {toCurrencyString(Math.abs(gain), symbol)} ({positive ? "+" : ""}
                     {gainPct.toFixed(2)}%)
                 </Typography>
             </Box>
@@ -159,11 +160,18 @@ function TopHoldingRow({ holding, rank }) {
     );
 }
 
+function priceForCurrency(holding, currency) {
+    if (currency === "usd") return parseFloat(holding.current_price_usd) || 0;
+    if (currency === "eur") return parseFloat(holding.current_price_eur) || 0;
+    return parseFloat(holding.current_price) || 0;
+}
+
 export default function Dashboard() {
-    const [data, setData] = useState(null);
+    const [rawData, setRawData] = useState(null);
     const [contentLoading, setContentLoading] = useState(true);
     const [authFailed, setAuthFailed] = useState(false);
     const { getSession } = useContext(AccountContext);
+    const { currency, symbol } = useCurrency();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -173,52 +181,44 @@ export default function Dashboard() {
                 return axios.get(endpoint, { headers: { Authorization: `Bearer ${session.token}` } });
             })
             .then((res) => {
-                const combined = res.data.holdings.map((holding) => {
-                    const txs = res.data.transactions.filter((t) => t.holding_id === holding.holding_id);
-                    const units = txs.reduce((a, b) => a + +b.units, 0);
-                    const marketValue = units * parseFloat(holding.current_price);
-                    const totalGain = getMVTotalGain(txs, parseFloat(holding.current_price));
-                    const spent = getPurchasePrice(txs);
-                    const totalGainPct = spent > 0 ? (100 * totalGain) / spent : 0;
-                    const dailyChange = parseFloat(holding.twenty_four_hour_change) || 0;
-                    const dailyGain = marketValue * (dailyChange / 100);
-                    return { ...holding, txs, units, marketValue, totalGain, totalGainPct, spent, dailyGain };
-                });
-
-                const withValue = combined.filter((h) => h.marketValue > 0);
-                const totalValue = withValue.reduce((a, b) => a + b.marketValue, 0);
-                const totalSpent = withValue.reduce((a, b) => a + b.spent, 0);
-                const totalGain = withValue.reduce((a, b) => a + b.totalGain, 0);
-                const totalGainPct = totalSpent > 0 ? (100 * totalGain) / totalSpent : 0;
-                const dailyGain = withValue.reduce((a, b) => a + b.dailyGain, 0);
-                const dailyGainPct = totalValue > 0 ? (100 * dailyGain) / totalValue : 0;
-
-                const sortedByGainPct = [...withValue].sort((a, b) => b.totalGainPct - a.totalGainPct);
-
-                setData({
-                    totalValue,
-                    totalSpent,
-                    totalGain,
-                    totalGainPct,
-                    dailyGain,
-                    dailyGainPct,
-                    lastPriceUpdate: res.data.lastPriceUpdate,
-                    holdings: withValue,
-                    sortedByGainPct,
-                    pieData: withValue.map((h) => ({
-                        marketValue: h.marketValue,
-                        symbol: h.ticker_symbol,
-                        units: h.units,
-                        color: h.color,
-                    })),
-                });
+                setRawData(res.data);
                 setContentLoading(false);
             })
             .catch((err) => {
                 if (err?.message === "No authenticated user") setAuthFailed(true);
-                // network/server errors don't redirect — just leave the loading state
             });
     }, [getSession]);
+
+    const data = rawData
+        ? (() => {
+              const combined = rawData.holdings.map((holding) => {
+                  const txs = rawData.transactions.filter((t) => t.holding_id === holding.holding_id);
+                  const price = priceForCurrency(holding, currency);
+                  const units = txs.reduce((a, b) => a + +b.units, 0);
+                  const marketValue = units * price;
+                  const totalGain = getMVTotalGain(txs, price);
+                  const spent = getPurchasePrice(txs);
+                  const totalGainPct = spent > 0 ? (100 * totalGain) / spent : 0;
+                  const dailyChange = parseFloat(holding.twenty_four_hour_change) || 0;
+                  const dailyGain = marketValue * (dailyChange / 100);
+                  return { ...holding, txs, units, marketValue, totalGain, totalGainPct, spent, dailyGain, price };
+              });
+              const withValue = combined.filter((h) => h.marketValue > 0);
+              const totalValue = withValue.reduce((a, b) => a + b.marketValue, 0);
+              const totalSpent = withValue.reduce((a, b) => a + b.spent, 0);
+              const totalGain = withValue.reduce((a, b) => a + b.totalGain, 0);
+              const totalGainPct = totalSpent > 0 ? (100 * totalGain) / totalSpent : 0;
+              const dailyGain = withValue.reduce((a, b) => a + b.dailyGain, 0);
+              const dailyGainPct = totalValue > 0 ? (100 * dailyGain) / totalValue : 0;
+              const sortedByGainPct = [...withValue].sort((a, b) => b.totalGainPct - a.totalGainPct);
+              return {
+                  totalValue, totalSpent, totalGain, totalGainPct, dailyGain, dailyGainPct,
+                  lastPriceUpdate: rawData.lastPriceUpdate,
+                  holdings: withValue, sortedByGainPct,
+                  pieData: withValue.map((h) => ({ marketValue: h.marketValue, symbol: h.ticker_symbol, units: h.units, color: h.color })),
+              };
+          })()
+        : null;
 
     if (authFailed) return <Navigate to="/login" replace />;
     if (contentLoading) return <ContentLoading />;
@@ -238,7 +238,7 @@ export default function Dashboard() {
                     <MetricCard
                         icon={<AccountBalanceWalletIcon />}
                         label="Total value"
-                        value={toCurrencyString(totalValue)}
+                        value={toCurrencyString(totalValue, symbol)}
                         sub={null}
                         subPositive={null}
                     />
@@ -247,7 +247,7 @@ export default function Dashboard() {
                     <MetricCard
                         icon={<ShowChartIcon />}
                         label="Total gain / loss"
-                        value={`${totalGain >= 0 ? "+" : ""}${toCurrencyString(Math.abs(totalGain))}`}
+                        value={`${totalGain >= 0 ? "+" : ""}${toCurrencyString(Math.abs(totalGain), symbol)}`}
                         sub={`${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(2)}% all time`}
                         subPositive={totalGain >= 0}
                     />
@@ -256,7 +256,7 @@ export default function Dashboard() {
                     <MetricCard
                         icon={dailyGain >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
                         label="24h change"
-                        value={`${dailyGain >= 0 ? "+" : ""}${toCurrencyString(Math.abs(dailyGain))}`}
+                        value={`${dailyGain >= 0 ? "+" : ""}${toCurrencyString(Math.abs(dailyGain), symbol)}`}
                         sub={`${dailyGainPct >= 0 ? "+" : ""}${dailyGainPct.toFixed(2)}% today`}
                         subPositive={dailyGain >= 0}
                     />
@@ -266,7 +266,7 @@ export default function Dashboard() {
                         icon={<AccountBalanceWalletIcon />}
                         label="Holdings"
                         value={pieData.length}
-                        sub={`${toCurrencyString(data.totalSpent)} invested`}
+                        sub={`${toCurrencyString(data.totalSpent, symbol)} invested`}
                         subPositive={null}
                     />
                 </Grid>
@@ -311,7 +311,7 @@ export default function Dashboard() {
                                                 </Box>
                                             </TableCell>
                                             <TableCell align="right">
-                                                {toCurrencyString(parseFloat(h.current_price))}
+                                                {toCurrencyString(h.price, symbol)}
                                             </TableCell>
                                             <TableCell align="right">
                                                 <Typography variant="body2" sx={{ color: change >= 0 ? "success.main" : "error.main" }}>
@@ -319,7 +319,7 @@ export default function Dashboard() {
                                                 </Typography>
                                             </TableCell>
                                             <TableCell align="right">
-                                                {toCurrencyString(parseFloat(h.market_cap))}
+                                                {toCurrencyString(parseFloat(h.market_cap), symbol)}
                                             </TableCell>
                                             <TableCell align="right">
                                                 <Typography variant="caption" color="text.secondary">
@@ -345,7 +345,7 @@ export default function Dashboard() {
                                 Allocation
                             </Typography>
                             <Box sx={{ display: "flex", justifyContent: "center" }}>
-                                <HoldingsPieChart chartData={pieData} />
+                                <HoldingsPieChart chartData={pieData} symbol={symbol} />
                             </Box>
                         </CardContent>
                     </Card>
@@ -360,7 +360,7 @@ export default function Dashboard() {
                             {sortedByGainPct.map((h, i) => (
                                 <React.Fragment key={h.holding_id}>
                                     {i > 0 && <Divider />}
-                                    <TopHoldingRow holding={h} rank={i + 1} />
+                                    <TopHoldingRow holding={h} rank={i + 1} symbol={symbol} />
                                 </React.Fragment>
                             ))}
                             {sortedByGainPct.length === 0 && (

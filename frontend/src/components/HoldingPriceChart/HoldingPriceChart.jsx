@@ -15,10 +15,11 @@ const formatDate = (ts) => {
     return new Date(ts).toLocaleDateString();
 };
 
-const formatPrice = (v) =>
-    `£${Number(v).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const makeFormatPrice = (symbol) => (v) =>
+    `${symbol}${Number(v).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export default function HoldingPriceChart({ data, circlesData, chartColor = "#75daad" }) {
+export default function HoldingPriceChart({ data, circlesData, chartColor = "#75daad", symbol = "£" }) {
+    const formatPrice = makeFormatPrice(symbol);
     if (!data || data.length === 0) return null;
 
     const chartPoints = data.map(([date, price]) => ({

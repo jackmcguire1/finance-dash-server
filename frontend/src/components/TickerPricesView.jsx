@@ -18,6 +18,7 @@ import axios from "axios";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { AccountContext } from "./Account";
+import { useCurrency } from "./Currency";
 import ContentLoading from "./ContentLoading";
 import { toCurrencyString } from "../utils";
 
@@ -55,16 +56,18 @@ export default function TickerPricesView() {
     const searchTimeout = useRef(null);
     const searchAnchorRef = useRef(null);
     const { getSession } = useContext(AccountContext);
+    const { currency, symbol } = useCurrency();
 
     useEffect(() => {
+        setInitialLoading(true);
         getSession()
-            .then(() => axios.get(`${import.meta.env.VITE_API_ENDPOINT}coins/markets?perPage=100`))
+            .then(() => axios.get(`${import.meta.env.VITE_API_ENDPOINT}coins/markets?perPage=100&currency=${currency}`))
             .then((res) => { setTopCoins(res.data); setInitialLoading(false); })
             .catch((err) => {
                 if (err?.message === "No authenticated user") setAuthFailed(true);
                 else setInitialLoading(false);
             });
-    }, [getSession]);
+    }, [getSession, currency]);
 
     const handleSearchChange = (value) => {
         setSearchText(value);
@@ -80,7 +83,7 @@ export default function TickerPricesView() {
         setPopperOpen(true);
         searchTimeout.current = setTimeout(() => {
             axios
-                .get(`${import.meta.env.VITE_API_ENDPOINT}coins/search?q=${encodeURIComponent(value)}`)
+                .get(`${import.meta.env.VITE_API_ENDPOINT}coins/search?q=${encodeURIComponent(value)}&currency=${currency}`)
                 .then((res) => { setSearchCoins(res.data); setSearchLoading(false); })
                 .catch(() => setSearchLoading(false));
         }, 400);
@@ -177,7 +180,7 @@ export default function TickerPricesView() {
                                                             </Box>
                                                         </TableCell>
                                                         <TableCell align="right">
-                                                            {coin.current_price != null ? toCurrencyString(coin.current_price) : "—"}
+                                                            {coin.current_price != null ? toCurrencyString(coin.current_price, symbol) : "—"}
                                                         </TableCell>
                                                         <TableCell align="right">
                                                             <Typography variant="body2" sx={{ color: change >= 0 ? "success.main" : "error.main" }}>
@@ -237,7 +240,7 @@ export default function TickerPricesView() {
                                         </Box>
                                     </TableCell>
                                     <TableCell align="right">
-                                        {coin.current_price != null ? toCurrencyString(coin.current_price) : "—"}
+                                        {coin.current_price != null ? toCurrencyString(coin.current_price, symbol) : "—"}
                                     </TableCell>
                                     <TableCell align="right">
                                         <Typography variant="body2" sx={{ color: change >= 0 ? "success.main" : "error.main" }}>
@@ -245,10 +248,10 @@ export default function TickerPricesView() {
                                         </Typography>
                                     </TableCell>
                                     <TableCell align="right">
-                                        {coin.market_cap != null ? toCurrencyString(coin.market_cap) : "—"}
+                                        {coin.market_cap != null ? toCurrencyString(coin.market_cap, symbol) : "—"}
                                     </TableCell>
                                     <TableCell align="right">
-                                        {coin.total_volume != null ? toCurrencyString(coin.total_volume) : "—"}
+                                        {coin.total_volume != null ? toCurrencyString(coin.total_volume, symbol) : "—"}
                                     </TableCell>
                                 </TableRow>
                             );

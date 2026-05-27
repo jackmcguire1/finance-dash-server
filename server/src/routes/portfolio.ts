@@ -17,13 +17,15 @@ async function createHolding(coinId: string, accountId: string): Promise<string>
     const client = await pool.connect();
     try {
         await client.query(
-            `INSERT INTO tickers (ticker_id, ticker_name, symbol, current_price, twenty_four_hour_change, market_cap, volume, image_url, coin_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            `INSERT INTO tickers (ticker_id, ticker_name, symbol, current_price, current_price_usd, current_price_eur, twenty_four_hour_change, market_cap, volume, image_url, coin_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
             [
                 tickerId,
                 coinData.name,
                 coinData.symbol,
                 coinData.currentPrice,
+                coinData.currentPriceUsd,
+                coinData.currentPriceEur,
                 coinData.twentyFourHourChange,
                 coinData.marketCap,
                 coinData.volume,
@@ -46,13 +48,15 @@ async function createHolding(coinId: string, accountId: string): Promise<string>
     const priceClient = await pool.connect();
     try {
         await priceClient.query(
-            `INSERT INTO ticker_prices (tp_id, ticker_id, datetime, price, twenty_four_hour_change, market_cap, volume, last_updated)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            `INSERT INTO ticker_prices (tp_id, ticker_id, datetime, price, price_usd, price_eur, twenty_four_hour_change, market_cap, volume, last_updated)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
             [
                 uuidv4(),
                 tickerId,
                 dateStr,
                 price.gbp,
+                price.usd,
+                price.eur,
                 price.gbp_24h_change,
                 price.gbp_market_cap,
                 price.gbp_24h_vol,
@@ -79,7 +83,7 @@ async function createHolding(coinId: string, accountId: string): Promise<string>
         await fsp.writeFile(tmpFile, json2tsv(tsvRows), "utf8");
         const copyClient = await pool.connect();
         try {
-            const stream = copyClient.query(copyFrom("COPY ticker_prices FROM STDIN WITH NULL as 'null'"));
+            const stream = copyClient.query(copyFrom("COPY ticker_prices (tp_id, ticker_id, datetime, price, twenty_four_hour_change, market_cap, volume, last_updated) FROM STDIN WITH NULL as 'null'"));
             await pipeline(fs.createReadStream(tmpFile), stream);
         } finally {
             copyClient.release();

@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import { createTheme, StyledEngineProvider, ThemeProvider } from "@mui/material";
 import { Account } from "./components/Account";
+import { CurrencyProvider } from "./components/Currency";
 import ClippedDrawer from "./components/ClippedDrawer";
 import reportWebVitals from "./reportWebVitals";
 
@@ -24,7 +25,9 @@ root.render(
         <StyledEngineProvider injectFirst>
             <ThemeProvider theme={theme}>
                 <Account>
-                    <ClippedDrawer />
+                    <CurrencyProvider>
+                        <ClippedDrawer />
+                    </CurrencyProvider>
                 </Account>
             </ThemeProvider>
         </StyledEngineProvider>

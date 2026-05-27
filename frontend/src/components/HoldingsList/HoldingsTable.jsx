@@ -21,6 +21,7 @@ import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toCurrencyString, toGainString } from "../../utils";
 import { getMVTotalGain, getPurchasePrice, getUnits } from "../../utils/holding";
+import { useCurrency } from "../Currency";
 import { CustomSnackBar } from "../CustomSnackBar";
 import CreateHoldingDialog from "./CreateHoldingDialog";
 
@@ -203,6 +204,7 @@ EnhancedTableToolbar.propTypes = {
 
 export default function HoldingsTable(props) {
     const navigate = useNavigate();
+    const { currency, symbol } = useCurrency();
     const [order, setOrder] = React.useState("desc");
     const [orderBy, setOrderBy] = React.useState("marketValue");
     const [selected, setSelected] = React.useState([]);
@@ -318,12 +320,12 @@ export default function HoldingsTable(props) {
                                             <TableCell>{row.ticker_symbol}</TableCell>
                                             <TableCell>{row.ticker_name}</TableCell>
                                             <TableCell>{getUnits(row.transactions)}</TableCell>
-                                            <TableCell>{toCurrencyString(row.ticker_price)}</TableCell>
+                                            <TableCell>{toCurrencyString(currency === "usd" ? row.ticker_price_usd : currency === "eur" ? row.ticker_price_eur : row.ticker_price, symbol)}</TableCell>
                                             <TableCell>
-                                                {toGainString(row.ticker_twenty_four_change, row.ticker_price)}
+                                                {toGainString(row.ticker_twenty_four_change, currency === "usd" ? row.ticker_price_usd : currency === "eur" ? row.ticker_price_eur : row.ticker_price, symbol)}
                                             </TableCell>
                                             <TableCell>
-                                                {toCurrencyString(getUnits(row.transactions) * row.ticker_price)}
+                                                {toCurrencyString(getUnits(row.transactions) * (currency === "usd" ? row.ticker_price_usd : currency === "eur" ? row.ticker_price_eur : row.ticker_price), symbol)}
                                             </TableCell>
                                             <TableCell>
                                                 {getPurchasePrice(row.transactions) === 0
@@ -331,15 +333,17 @@ export default function HoldingsTable(props) {
                                                     : toGainString(
                                                           parseFloat(row.ticker_twenty_four_change),
                                                           getPurchasePrice(row.transactions),
+                                                          symbol,
                                                       )}
                                             </TableCell>
                                             <TableCell>
                                                 {getPurchasePrice(row.transactions) === 0
                                                     ? "—"
                                                     : toGainString(
-                                                          (100 * getMVTotalGain(row.transactions, row.ticker_price)) /
+                                                          (100 * getMVTotalGain(row.transactions, currency === "usd" ? row.ticker_price_usd : currency === "eur" ? row.ticker_price_eur : row.ticker_price)) /
                                                               getPurchasePrice(row.transactions),
                                                           getPurchasePrice(row.transactions),
+                                                          symbol,
                                                       )}
                                             </TableCell>
                                         </TableRow>

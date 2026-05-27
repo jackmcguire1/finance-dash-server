@@ -21,7 +21,7 @@ export const category20Colors = [
     "#9edae5",
 ];
 
-export function toCurrencyString(v) {
+export function toCurrencyString(v, symbol = "£") {
     const parsed = Math.abs(parseFloat(v));
     let asStr = "";
     if (parsed > 1) {
@@ -34,14 +34,14 @@ export function toCurrencyString(v) {
         });
         asStr = parsed.toFixed(nzIndex + 1);
     }
-    return `£${asStr}`;
+    return `${symbol}${asStr}`;
 }
 
-export function toGainString(v, m) {
+export function toGainString(v, m, symbol = "£") {
     const parsed = parseFloat(v);
     const chg = (Math.abs(v) / 100) * m;
     const parsedFixed = parsed.toFixed(2);
-    const currencyStr = toCurrencyString(chg);
+    const currencyStr = toCurrencyString(chg, symbol);
     if (parseFloat(m) === 0) {
         return <div style={{ color: "gray" }}>+{currencyStr} (+0.00%)</div>;
     } else if (parsed < 0) {

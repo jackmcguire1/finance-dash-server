@@ -1,6 +1,6 @@
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
 
-export default function HoldingsPieChart({ chartData }) {
+export default function HoldingsPieChart({ chartData, symbol = "£" }) {
     const total = chartData.reduce((a, b) => a + b.marketValue, 0);
 
     return (
@@ -21,7 +21,7 @@ export default function HoldingsPieChart({ chartData }) {
             </Pie>
             <Tooltip
                 formatter={(value, name) => [
-                    `£${value.toFixed(2)} (${((100 * value) / total).toFixed(2)}%)`,
+                    `${symbol}${value.toFixed(2)} (${((100 * value) / total).toFixed(2)}%)`,
                     name,
                 ]}
                 contentStyle={{ background: "#1a1a2e", border: "1px solid #444", color: "#fff" }}

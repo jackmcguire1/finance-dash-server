@@ -7,6 +7,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { toCurrencyString, toGainString } from "../utils";
 import { getMVTotalGain, getPurchasePrice, getUnits } from "../utils/holding";
 import { AccountContext } from "./Account";
+import { useCurrency } from "./Currency";
 import ContentLoading from "./ContentLoading";
 import { CustomSnackBar } from "./CustomSnackBar";
 import HoldingPriceChart from "./HoldingPriceChart/HoldingPriceChart";
@@ -32,6 +33,11 @@ export default function HoldingView() {
     const snackbarRef = useRef();
 
     const { getSession } = useContext(AccountContext);
+    const { currency, symbol: currencySymbol } = useCurrency();
+
+    const [rawTickerPrices, setRawTickerPrices] = useState([]);
+
+    const priceField = currency === "usd" ? "price_usd" : currency === "eur" ? "price_eur" : "price";
 
     const getTxCircles = () => {
         return transactions.map((t) => {
@@ -47,18 +53,9 @@ export default function HoldingView() {
                     setName(res.data.holding.ticker_name);
                     setSymbol(res.data.holding.ticker_symbol);
                     setImageUrl(res.data.holding.image_url);
-                    setTickerPrices(
-                        res.data.tickerPrices.map((p) => {
-                            return [new Date(p.datetime), parseFloat(p.price)];
-                        }),
-                    );
+                    setRawTickerPrices(res.data.tickerPrices);
                     setTransactions(res.data.transactions);
                     setHoldingColor(res.data.holding.color);
-                    const recentTP = res.data.tickerPrices[res.data.tickerPrices.length - 1];
-                    setCurrentPrice(recentTP.price);
-                    setTwentyFourHrChange(recentTP.twenty_four_hour_change);
-                    setMarketCap(recentTP.market_cap);
-                    setTwentyFourHrVolume(recentTP.volume);
                     setContentLoading(false);
                 });
             })
@@ -66,6 +63,16 @@ export default function HoldingView() {
                 setAuthFailed(true);
             });
     }, [holdingId, getSession]);
+
+    useEffect(() => {
+        if (rawTickerPrices.length === 0) return;
+        setTickerPrices(rawTickerPrices.map((p) => [new Date(p.datetime), parseFloat(p[priceField] ?? p.price)]));
+        const recentTP = rawTickerPrices[rawTickerPrices.length - 1];
+        setCurrentPrice(parseFloat(recentTP[priceField] ?? recentTP.price));
+        setTwentyFourHrChange(recentTP.twenty_four_hour_change);
+        setMarketCap(recentTP.market_cap);
+        setTwentyFourHrVolume(recentTP.volume);
+    }, [rawTickerPrices, priceField]);
 
     if (authFailed) {
         return <Navigate to="/login" replace />;
@@ -88,10 +95,10 @@ export default function HoldingView() {
                                 </div>
                                 <div style={{ marginTop: "40px", flex: 1, display: "flex", flexDirection: "column" }}>
                                     {[
-                                        { label: "Price", value: toCurrencyString(currentPrice) },
-                                        { label: "24 hour change (%)", value: toGainString(twentyFourHrChange, currentPrice) },
-                                        { label: "24 hour volume", value: toCurrencyString(twentyFourHrVolume) },
-                                        { label: "Market cap", value: toCurrencyString(marketCap) },
+                                        { label: "Price", value: toCurrencyString(currentPrice, currencySymbol) },
+                                        { label: "24 hour change (%)", value: toGainString(twentyFourHrChange, currentPrice, currencySymbol) },
+                                        { label: "24 hour volume", value: toCurrencyString(twentyFourHrVolume, currencySymbol) },
+                                        { label: "Market cap", value: toCurrencyString(marketCap, currencySymbol) },
                                     ].map(({ label, value }) => (
                                         <div key={label} style={{ display: "flex", flex: 1, alignItems: "center" }}>
                                             <div style={labelStyle}><Typography variant="body1">{label}</Typography></div>
@@ -108,16 +115,17 @@ export default function HoldingView() {
                                 <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                                     {[
                                         { label: "Units", value: getUnits(transactions) },
-                                        { label: "Market value", value: toCurrencyString(getUnits(transactions) * currentPrice) },
+                                        { label: "Market value", value: toCurrencyString(getUnits(transactions) * currentPrice, currencySymbol) },
                                         {
                                             label: "Market value 24h gain",
-                                            value: toGainString(parseFloat(twentyFourHrChange), getPurchasePrice(transactions)),
+                                            value: toGainString(parseFloat(twentyFourHrChange), getPurchasePrice(transactions), currencySymbol),
                                         },
                                         {
                                             label: "Market value total gain",
                                             value: toGainString(
                                                 (100 * getMVTotalGain(transactions, currentPrice)) / getPurchasePrice(transactions),
                                                 getPurchasePrice(transactions),
+                                                currencySymbol,
                                             ),
                                         },
                                     ].map(({ label, value }) => (
@@ -141,6 +149,7 @@ export default function HoldingView() {
                                 data={tickerPrices}
                                 circlesData={getTxCircles()}
                                 chartColor={holdingColor}
+                                symbol={currencySymbol}
                             />
                             <CustomSnackBar ref={snackbarRef} />
                         </div>

@@ -16,19 +16,21 @@ export async function holdingsRoutes(app: FastifyInstance): Promise<void> {
         return reply.send(coins);
     });
 
-    // GET /coins/markets?page=1&perPage=25 — top coins by market cap with images
-    app.get<{ Querystring: { page?: string; perPage?: string } }>("/coins/markets", async (req, reply) => {
+    // GET /coins/markets?page=1&perPage=25&currency=gbp — top coins by market cap with images
+    app.get<{ Querystring: { page?: string; perPage?: string; currency?: string } }>("/coins/markets", async (req, reply) => {
         const page = parseInt(req.query.page ?? "1", 10);
         const perPage = parseInt(req.query.perPage ?? "25", 10);
-        const coins = await fetchCoinsMarkets(page, Math.min(perPage, 100));
+        const currency = ["gbp", "usd", "eur"].includes(req.query.currency ?? "") ? req.query.currency! : "gbp";
+        const coins = await fetchCoinsMarkets(page, Math.min(perPage, 100), currency);
         return reply.send(coins);
     });
 
-    // GET /coins/search?q=bitcoin — search coins with images
-    app.get<{ Querystring: { q: string } }>("/coins/search", async (req, reply) => {
+    // GET /coins/search?q=bitcoin&currency=gbp — search coins with images
+    app.get<{ Querystring: { q: string; currency?: string } }>("/coins/search", async (req, reply) => {
         const { q } = req.query;
         if (!q || q.trim().length < 2) return reply.send([]);
-        const coins = await searchCoins(q.trim());
+        const currency = ["gbp", "usd", "eur"].includes(req.query.currency ?? "") ? req.query.currency! : "gbp";
+        const coins = await searchCoins(q.trim(), currency);
         return reply.send(coins);
     });
 
@@ -43,13 +45,15 @@ export async function holdingsRoutes(app: FastifyInstance): Promise<void> {
         const client = await pool.connect();
         try {
             await client.query(
-                `INSERT INTO tickers (ticker_id, ticker_name, symbol, current_price, twenty_four_hour_change, market_cap, volume, image_url, coin_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                `INSERT INTO tickers (ticker_id, ticker_name, symbol, current_price, current_price_usd, current_price_eur, twenty_four_hour_change, market_cap, volume, image_url, coin_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
                 [
                     tickerId,
                     coinData.name,
                     coinData.symbol,
                     coinData.currentPrice,
+                    coinData.currentPriceUsd,
+                    coinData.currentPriceEur,
                     coinData.twentyFourHourChange,
                     coinData.marketCap,
                     coinData.volume,
@@ -71,13 +75,15 @@ export async function holdingsRoutes(app: FastifyInstance): Promise<void> {
         const poolClient = await pool.connect();
         try {
             await poolClient.query(
-                `INSERT INTO ticker_prices (tp_id, ticker_id, datetime, price, twenty_four_hour_change, market_cap, volume, last_updated)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                `INSERT INTO ticker_prices (tp_id, ticker_id, datetime, price, price_usd, price_eur, twenty_four_hour_change, market_cap, volume, last_updated)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
                 [
                     uuidv4(),
                     tickerId,
                     dateStr,
                     price.gbp,
+                    price.usd,
+                    price.eur,
                     price.gbp_24h_change,
                     price.gbp_market_cap,
                     price.gbp_24h_vol,
@@ -106,7 +112,7 @@ export async function holdingsRoutes(app: FastifyInstance): Promise<void> {
             await fsp.writeFile(tmpFile, json2tsv(tsvRows), "utf8");
             const copyClient = await pool.connect();
             try {
-                const stream = copyClient.query(copyFrom("COPY ticker_prices FROM STDIN WITH NULL as 'null'"));
+                const stream = copyClient.query(copyFrom("COPY ticker_prices (tp_id, ticker_id, datetime, price, twenty_four_hour_change, market_cap, volume, last_updated) FROM STDIN WITH NULL as 'null'"));
                 const fileStream = fs.createReadStream(tmpFile);
                 await pipeline(fileStream, stream);
             } finally {
@@ -122,6 +128,8 @@ export async function holdingsRoutes(app: FastifyInstance): Promise<void> {
             ticker_logo: coinData.imageUrl,
             ticker_name: coinData.name,
             ticker_price: String(price.gbp),
+            ticker_price_usd: String(price.usd),
+            ticker_price_eur: String(price.eur),
             ticker_symbol: coinData.symbol,
             ticker_twenty_four_change: String(price.gbp_24h_change),
             transactions: [],
@@ -193,6 +201,8 @@ export async function holdingsRoutes(app: FastifyInstance): Promise<void> {
                     t.symbol,
                     t.image_url,
                     p.price,
+                    p.price_usd,
+                    p.price_eur,
                     p.twenty_four_hour_change,
                     p.market_cap,
                     p.volume,
